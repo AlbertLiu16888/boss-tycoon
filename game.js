@@ -86,6 +86,7 @@ const Game = {
     document.getElementById('end-screen').classList.add('hidden');
     document.getElementById('top-bar').classList.add('hidden');
     document.getElementById('news-ticker').classList.add('hidden');
+    document.getElementById('next-turn-bar').classList.add('hidden');
     document.getElementById('main-content').classList.add('hidden');
     document.getElementById('bottom-nav').classList.add('hidden');
     document.getElementById('splash-screen').classList.remove('hidden');
@@ -99,10 +100,15 @@ const Game = {
     document.getElementById('end-screen').classList.add('hidden');
     document.getElementById('top-bar').classList.remove('hidden');
     document.getElementById('news-ticker').classList.remove('hidden');
+    document.getElementById('next-turn-bar').classList.remove('hidden');
     document.getElementById('main-content').classList.remove('hidden');
     document.getElementById('bottom-nav').classList.remove('hidden');
     UI.updateAll();
     this.saveGame();
+    // Show tutorial for first-time players
+    if (!localStorage.getItem('boss_tycoon_tutorial_done') && this.state.turn === 1) {
+      setTimeout(() => { if (typeof Tutorial !== 'undefined') Tutorial.start(); }, 400);
+    }
   },
 
   nextTurn() {
