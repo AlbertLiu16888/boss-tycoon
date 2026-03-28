@@ -25,6 +25,11 @@ function getInventoryCount(state) {
 
 function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
 
+const CATEGORY_NAMES = {
+  food: '飲食', tech: '科技', collectible: '收藏', green: '綠能',
+  stock: '股票', crypto: '加密', vehicle: '交通',
+};
+
 // ===== Game State =====
 const DEFAULT_STATE = {
   turn: 1,
@@ -46,6 +51,8 @@ const DEFAULT_STATE = {
   totalEarned: 0,
   currentEvent: null,
   eventMultipliers: {},  // { category: multiplier } for current turn
+  pendingEvent: null,    // event queued from forecast (fires next turn)
+  forecastNews: null,    // forecast headline shown in ticker
   gameOver: false,
 };
 
@@ -104,6 +111,7 @@ const Game = {
     document.getElementById('main-content').classList.remove('hidden');
     document.getElementById('bottom-nav').classList.remove('hidden');
     UI.updateAll();
+    updateTicker(null); // Show forecast or tip
     this.saveGame();
     // Show tutorial for first-time players
     if (!localStorage.getItem('boss_tycoon_tutorial_done') && this.state.turn === 1) {
@@ -119,9 +127,17 @@ const Game = {
     const livingCost = BASE_LIVING_COST * (1 + (s.turn - 1) * 0.015);
     s.cash -= Math.round(livingCost);
 
-    // 2. Trigger random event
+    // 2. Trigger event (forecast system: pending event fires, or roll new)
     s.eventMultipliers = {};
-    const event = this._rollEvent();
+    let event = null;
+    if (s.pendingEvent) {
+      // Forecasted event fires this turn
+      event = EVENTS.find(e => e.id === s.pendingEvent);
+      s.pendingEvent = null;
+      s.forecastNews = null;
+    } else {
+      event = this._rollEvent();
+    }
     s.currentEvent = event;
 
     // 3. Apply event effects
@@ -129,7 +145,10 @@ const Game = {
       this._applyEvent(event);
     }
 
-    // 4. Update prices
+    // 4. Queue next forecast (roll a future event and show its news)
+    this._rollForecast();
+
+    // 5. Update prices
     s.prevPrices = { ...s.prices };
     for (const g of GOODS) {
       let base = g.basePrice;
@@ -141,7 +160,7 @@ const Game = {
       s.prices[g.id] = Math.round(newPrice);
     }
 
-    // 5. Collect rent
+    // 6. Collect rent
     let totalRent = 0;
     for (const pid of s.properties) {
       const prop = PROPERTIES.find(p => p.id === pid);
@@ -156,7 +175,7 @@ const Game = {
     }
     s.cash += totalRent;
 
-    // 6. Apply friend bonuses
+    // 7. Apply friend bonuses
     for (const fid of s.friends) {
       const npc = NPCS.find(n => n.id === fid);
       if (!npc) continue;
@@ -164,22 +183,22 @@ const Game = {
       if (npc.bonus.type === 'health_per_turn') s.health = clamp(s.health + npc.bonus.value, 0, 100);
     }
 
-    // 7. Age-related health decay
+    // 8. Age-related health decay
     if (s.age >= 40) s.health = clamp(s.health - 2, 0, 100);
     if (s.age >= 50) s.health = clamp(s.health - 3, 0, 100);
 
-    // 8. Track healthy turns
+    // 9. Track healthy turns
     if (s.health >= 90) s.healthyTurns++;
     else s.healthyTurns = 0;
 
-    // 9. Advance turn
+    // 10. Advance turn
     s.turn++;
     s.age++;
 
-    // 10. Check achievements
+    // 11. Check achievements
     this._checkAchievements();
 
-    // 11. Check end conditions
+    // 12. Check end conditions
     if (s.turn > 40 || s.health <= 0) {
       s.gameOver = true;
       this.saveGame();
@@ -192,18 +211,23 @@ const Game = {
       return;
     }
 
-    // 12. Try to meet new NPC
+    // 13. Try to meet new NPC
     this._tryMeetNPC();
 
-    // 13. Save & update UI
+    // 14. Save & update UI
     this.saveGame();
     UI.updateAll();
 
-    // 14. Show event if any
+    // 15. Update ticker with forecast or tips
+    this._updateForecastTicker();
+
+    // 16. Show event if any
     if (event) UI.showEventModal(event);
   },
 
   _rollEvent() {
+    // If there's a pending forecasted event, it's handled in nextTurn() already
+    // This only rolls non-forecasted random events
     // Events only trigger on even years (every 2 years)
     if (this.state.turn % 2 !== 0) return null;
     // 70% chance on eligible turns
@@ -220,6 +244,33 @@ const Game = {
     }
     if (pool.length === 0) return null;
     return pool[Math.floor(Math.random() * pool.length)];
+  },
+
+  _rollForecast() {
+    const s = this.state;
+    // 40% chance to queue a forecasted event for next turn
+    if (s.pendingEvent) return; // already have one queued
+    if (Math.random() > 0.4) return;
+    // Pick a random event that has a forecast
+    const forecastable = EVENTS.filter(e => e.forecast);
+    if (forecastable.length === 0) return;
+    const event = forecastable[Math.floor(Math.random() * forecastable.length)];
+    s.pendingEvent = event.id;
+    s.forecastNews = event.forecast;
+  },
+
+  _updateForecastTicker() {
+    const s = this.state;
+    const ticker = document.getElementById('ticker-text');
+    if (s.forecastNews) {
+      // Show forecast news - this hints at what's coming next turn
+      ticker.textContent = s.forecastNews;
+      ticker.classList.add('text-yellow-300');
+      ticker.classList.remove('text-cyan-300');
+    } else {
+      ticker.classList.remove('text-yellow-300');
+      ticker.classList.add('text-cyan-300');
+    }
   },
 
   _applyEvent(event) {
@@ -280,6 +331,16 @@ const Game = {
       case 'hint':
         // These are informational
         break;
+    }
+
+    // Handle secondary effects (e.g., typhoon → food price boost)
+    if (event.secondaryEffect && !event._shielded) {
+      const se = event.secondaryEffect;
+      if (se.type === 'category_boost') {
+        s.eventMultipliers[se.category] = (s.eventMultipliers[se.category] || 1) * se.multiplier;
+      } else if (se.type === 'category_crash') {
+        s.eventMultipliers[se.category] = (s.eventMultipliers[se.category] || 1) * se.multiplier;
+      }
     }
   },
 
@@ -456,19 +517,24 @@ const UI = {
         s.warehouseCapacity - getInventoryCount(s)
       );
 
+      const profitLoss = held > 0 ? (price - avgCost) * held : 0;
+      const profitPct = avgCost > 0 ? ((price - avgCost) / avgCost * 100).toFixed(1) : '0.0';
+      const bigChange = Math.abs(parseFloat(pct)) >= 20;
+
       html += `
-        <div class="market-card">
+        <div class="market-card ${bigChange ? 'price-flash' : ''}" style="${bigChange ? (diff > 0 ? 'border-color:rgba(248,113,113,0.4);' : 'border-color:rgba(52,211,153,0.4);') : ''}">
           <div class="flex justify-between items-start mb-2">
             <div class="flex items-center gap-2">
-              <span class="text-2xl">${g.icon}</span>
+              <span class="text-3xl icon-glow">${g.icon}</span>
               <div>
                 <div class="font-bold text-sm">${g.name}</div>
                 <div class="text-xs text-gray-500">持有: ${held}${held > 0 ? ` (均價 $${formatMoney(avgCost)})` : ''}</div>
+                ${held > 0 ? `<div class="text-xs ${profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">${profitLoss >= 0 ? '📈' : '📉'} ${profitLoss >= 0 ? '+' : ''}$${formatMoney(profitLoss)} (${profitPct}%)</div>` : ''}
               </div>
             </div>
             <div class="text-right">
-              <div class="font-black text-lg">$${formatMoney(price)}</div>
-              <div class="text-xs ${diff > 0 ? 'price-up' : diff < 0 ? 'price-down' : 'text-gray-500'}">
+              <div class="font-black text-lg ${bigChange ? (diff > 0 ? 'price-up' : 'price-down') : ''}">$${formatMoney(price)}</div>
+              <div class="text-xs font-bold ${diff > 0 ? 'price-up' : diff < 0 ? 'price-down' : 'text-gray-500'}">
                 ${diff > 0 ? '▲' : diff < 0 ? '▼' : '─'} ${Math.abs(pct)}%
               </div>
             </div>
@@ -620,7 +686,21 @@ const UI = {
     if (!event) { if (callback) callback(); return; }
     const modal = document.getElementById('event-modal');
     document.getElementById('event-icon').textContent = event.icon;
+    document.getElementById('event-icon').style.fontSize = '3rem';
     document.getElementById('event-title').textContent = event.title;
+
+    // Color the modal border based on event type
+    const modalBox = modal.querySelector('.relative');
+    if (event.type === 'positive') {
+      modalBox.style.borderColor = '#22c55e';
+      modalBox.style.boxShadow = '0 0 20px rgba(34,197,94,0.3), inset 0 0 15px rgba(34,197,94,0.1)';
+    } else if (event.type === 'negative') {
+      modalBox.style.borderColor = '#ef4444';
+      modalBox.style.boxShadow = '0 0 20px rgba(239,68,68,0.3), inset 0 0 15px rgba(239,68,68,0.1)';
+    } else {
+      modalBox.style.borderColor = '#a855f7';
+      modalBox.style.boxShadow = '0 0 20px rgba(168,85,247,0.3), inset 0 0 15px rgba(168,85,247,0.1)';
+    }
 
     let desc = event.desc;
     if (event._shielded) desc += '\n\n⚖️ 林律師出手，成功抵擋了負面影響！';
@@ -632,18 +712,26 @@ const UI = {
       effectText = '✅ 影響已被抵擋';
     } else {
       switch (eff.type) {
-        case 'category_boost': effectText = `📈 ${eff.category} 類商品價格 x${eff.multiplier}`; break;
-        case 'category_crash': effectText = `📉 ${eff.category} 類商品價格 x${eff.multiplier}`; break;
+        case 'category_boost': effectText = `📈 ${CATEGORY_NAMES[eff.category] || eff.category}類商品價格 x${eff.multiplier}`; break;
+        case 'category_crash': effectText = `📉 ${CATEGORY_NAMES[eff.category] || eff.category}類商品價格 x${eff.multiplier}`; break;
         case 'cash_change': effectText = `💰 現金 ${eff.value > 0 ? '+' : ''}$${formatMoney(eff.value)}`; break;
         case 'rep_change': effectText = `⭐ 名聲 ${eff.value > 0 ? '+' : ''}${eff.value}`; break;
         case 'health_change': effectText = `❤️ 健康 ${eff.value > 0 ? '+' : ''}${eff.value}`; break;
-        case 'category_damage': effectText = `💥 ${eff.category} 類庫存損失 ${Math.round(eff.ratio * 100)}%`; break;
+        case 'category_damage': effectText = `💥 ${CATEGORY_NAMES[eff.category] || eff.category}類庫存損失 ${Math.round(eff.ratio * 100)}%`; break;
         case 'random_damage': effectText = `🌀 隨機庫存損失 ${Math.round(eff.ratio * 100)}%`; break;
         case 'property_boost': effectText = `🏠 房產增值收益！`; break;
         case 'special_deal': effectText = `🎭 特殊交易機會！`; break;
         case 'hint': effectText = `🔮 這是一個提示...`; break;
       }
     }
+    // Show secondary effect info
+    if (event.secondaryEffect && !event._shielded) {
+      const se = event.secondaryEffect;
+      if (se.type === 'category_boost') {
+        effectText += `\n🔥 連鎖效應：${CATEGORY_NAMES[se.category] || se.category}類商品價格 x${se.multiplier}`;
+      }
+    }
+    document.getElementById('event-effect').style.whiteSpace = 'pre-line';
     document.getElementById('event-effect').textContent = effectText;
 
     modal.classList.remove('hidden');
@@ -710,6 +798,11 @@ function updateTicker(event) {
   const ticker = document.getElementById('ticker-text');
   if (event) {
     ticker.textContent = `${event.icon} ${event.title} ─ ${event.desc}`;
+    ticker.classList.remove('ticker-forecast');
+  } else if (Game.state && Game.state.forecastNews) {
+    // Show forecast news for upcoming event
+    ticker.textContent = Game.state.forecastNews;
+    ticker.classList.add('ticker-forecast');
   } else {
     const tips = [
       '低買高賣是致富的不二法門！',
@@ -718,8 +811,10 @@ function updateTicker(event) {
       '多交朋友，每位 NPC 都有獨特的加成效果。',
       '健康很重要！40 歲後健康會自然下降。',
       '留意市場趨勢，高波動商品高風險高報酬！',
+      '注意新聞快訊！它可能在暗示下一年會發生什麼事...',
     ];
     ticker.textContent = tips[Math.floor(Math.random() * tips.length)];
+    ticker.classList.remove('ticker-forecast');
   }
 }
 
