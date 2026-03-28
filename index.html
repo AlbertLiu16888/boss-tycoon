@@ -7,10 +7,10 @@
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col max-w-lg mx-auto relative overflow-hidden">
+<body class="bg-app text-gray-100 flex flex-col max-w-lg mx-auto relative">
 
 <!-- Splash Screen -->
-<div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-950">
+<div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-app">
   <div class="text-center px-6">
     <div class="text-6xl mb-4 neon-glow-text animate-pulse-slow">💰</div>
     <h1 class="text-3xl font-black neon-text mb-2">霸總養成計畫</h1>
@@ -31,7 +31,7 @@
 </div>
 
 <!-- Top Status Bar -->
-<header id="top-bar" class="sticky top-0 z-40 bg-gray-900 bg-opacity-95 backdrop-filter px-4 py-2 border-b border-cyan-900 hidden">
+<header id="top-bar" class="flex-shrink-0 z-40 bg-gray-900 px-4 py-2 border-b border-cyan-900 hidden">
   <div class="flex justify-between items-center text-sm">
     <div class="flex items-center gap-2">
       <span class="text-cyan-400 font-bold" id="age-display">20歲</span>
@@ -67,7 +67,7 @@
 </header>
 
 <!-- News Ticker -->
-<div id="news-ticker" class="bg-gray-900 border-b border-gray-800 overflow-hidden h-8 flex items-center hidden">
+<div id="news-ticker" class="flex-shrink-0 bg-gray-900 border-b border-gray-800 overflow-hidden h-8 flex items-center hidden">
   <span class="text-yellow-500 text-xs font-bold px-2 flex-shrink-0">📰 快訊</span>
   <div class="overflow-hidden flex-1">
     <div id="ticker-text" class="whitespace-nowrap text-xs text-cyan-300 ticker-animate">
