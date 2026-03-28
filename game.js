@@ -29,7 +29,7 @@ function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
 const DEFAULT_STATE = {
   turn: 1,
   age: 20,
-  cash: 1000000,
+  cash: 3000000,
   health: 100,
   reputation: 0,
   inventory: {},       // { goodId: quantity }
@@ -116,7 +116,7 @@ const Game = {
     const s = this.state;
 
     // 1. Deduct living cost
-    const livingCost = BASE_LIVING_COST * (1 + (s.turn - 1) * 0.03);
+    const livingCost = BASE_LIVING_COST * (1 + (s.turn - 1) * 0.015);
     s.cash -= Math.round(livingCost);
 
     // 2. Trigger random event
@@ -204,10 +204,21 @@ const Game = {
   },
 
   _rollEvent() {
-    // 60% chance of an event each turn
-    if (Math.random() > 0.6) return null;
-    // Weight toward non-special events
-    const pool = EVENTS.filter(e => e.type !== 'special' || Math.random() < 0.2);
+    // Events only trigger on even years (every 2 years)
+    if (this.state.turn % 2 !== 0) return null;
+    // 70% chance on eligible turns
+    if (Math.random() > 0.7) return null;
+    // Weighted pool: 65% positive, 25% negative, 10% special
+    const roll = Math.random();
+    let pool;
+    if (roll < 0.65) {
+      pool = EVENTS.filter(e => e.type === 'positive');
+    } else if (roll < 0.90) {
+      pool = EVENTS.filter(e => e.type === 'negative');
+    } else {
+      pool = EVENTS.filter(e => e.type === 'special');
+    }
+    if (pool.length === 0) return null;
     return pool[Math.floor(Math.random() * pool.length)];
   },
 

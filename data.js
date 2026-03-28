@@ -90,4 +90,4 @@ const LIFE_RANKS = [
 ];
 
 // ===== 生活費基準 =====
-const BASE_LIVING_COST = 120000; // 每回合基本生活費
+const BASE_LIVING_COST = 50000; // 每回合基本生活費（降低難度）
