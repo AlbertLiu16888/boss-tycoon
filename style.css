@@ -32,16 +32,23 @@ html { background: var(--bg-deep-blue); }
 html, body { height: 100%; overflow: hidden; }
 body {
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: var(--bg-deep-blue);
-  background-image: url('bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background: var(--bg-deep-blue);
   color: var(--text-main);
   display: flex;
   flex-direction: column;
   max-height: 100vh;
   max-height: 100dvh;
+}
+
+/* Background image layer */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url('bg.jpg') center / cover no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Subtle grid pattern overlay */
@@ -50,11 +57,11 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    linear-gradient(rgba(0,242,254,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,242,254,0.02) 1px, transparent 1px);
+    linear-gradient(rgba(0,242,254,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,242,254,0.03) 1px, transparent 1px);
   background-size: 40px 40px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 .bg-app { background: var(--bg-deep-blue); }
@@ -65,8 +72,11 @@ body::before {
   -webkit-overflow-scrolling: touch;
   min-height: 0;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
+
+/* Ensure all UI layers sit above background */
+#top-bar, #news-ticker, #next-turn-bar, #bottom-nav { position: relative; z-index: 2; }
 
 /* --- Neon Typography --- */
 .neon-text {
