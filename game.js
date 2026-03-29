@@ -63,6 +63,7 @@ const DEFAULT_STATE = {
   pendingEvent: null,    // event queued from forecast (fires next turn)
   forecastNews: null,    // forecast headline shown in ticker
   linaUsedThisTurn: false, // Lina "打聽消息" once per turn
+  turnActions: {},       // { goodId: 'buy'|'sell' } - lock per turn
   gameOver: false,
 };
 
@@ -85,6 +86,7 @@ const Game = {
       const saved = localStorage.getItem('boss_tycoon_save');
       if (saved) {
         this.state = JSON.parse(saved);
+        if (!this.state.turnActions) this.state.turnActions = {};
         this._startGame();
       }
     } catch (e) {
@@ -143,6 +145,7 @@ const Game = {
     // 2. Trigger event (forecast system: pending event fires, or roll new)
     s.eventMultipliers = {};
     s.linaUsedThisTurn = false;
+    s.turnActions = {}; // reset buy/sell lock
     delete s._feeDiscount; // reset per-turn fee discount
     let event = null;
     if (s.pendingEvent) {
@@ -440,6 +443,10 @@ const Game = {
 
   buyGood(goodId, qty) {
     const s = this.state;
+    // Check turn action lock: can only buy OR sell each good once per turn
+    if (s.turnActions[goodId] === 'sell') { UI.showToast('❌ 本年度已賣出此商品，無法再買入', 'red'); return; }
+    if (s.turnActions[goodId] === 'buy') { UI.showToast('❌ 本年度已買入此商品', 'red'); return; }
+
     const price = s.prices[goodId];
     const totalCost = price * qty;
     const currentCount = getInventoryCount(s);
@@ -467,6 +474,7 @@ const Game = {
     s.inventory[goodId] = prevQty + qty;
     s.avgCost[goodId] = Math.round((prevAvg * prevQty + finalCost) / (prevQty + qty));
 
+    s.turnActions[goodId] = 'buy';
     UI.showToast(`✅ 買入 ${good.name} x${qty}`, 'green');
     UI.updateAll();
     Game.saveGame();
@@ -474,6 +482,9 @@ const Game = {
 
   sellGood(goodId, qty) {
     const s = this.state;
+    // Check turn action lock
+    if (s.turnActions[goodId] === 'buy') { UI.showToast('❌ 本年度已買入此商品，無法再賣出', 'red'); return; }
+    if (s.turnActions[goodId] === 'sell') { UI.showToast('❌ 本年度已賣出此商品', 'red'); return; }
     const held = s.inventory[goodId] || 0;
     if (qty > held) { UI.showToast('❌ 持有數量不足！', 'red'); return; }
 
@@ -505,6 +516,7 @@ const Game = {
     if (good && good.category === 'crypto' && profit > 0) s.cryptoProfit += profit;
 
     const profitText = profit >= 0 ? `賺 $${formatMoney(profit)}` : `虧 $${formatMoney(Math.abs(profit))}`;
+    s.turnActions[goodId] = 'sell';
     UI.showToast(`💸 賣出 ${good.name} x${qty}（${profitText}）`, profit >= 0 ? 'green' : 'red');
     Game._checkAchievements();
     UI.updateAll();
@@ -651,6 +663,7 @@ const UI = {
 
   _renderMarket() {
     const s = Game.state;
+    if (!s.turnActions) s.turnActions = {};
     const container = document.getElementById('market-list');
     let html = '';
 
@@ -689,11 +702,11 @@ const UI = {
             </div>
           </div>
           <div class="flex items-center gap-2 justify-end">
-            <button class="btn-max" onclick="document.getElementById('qty-${g.id}').value=${maxBuy}">最大</button>
+            <button class="btn-max" onclick="document.getElementById('qty-${g.id}').value=${maxBuy}" ${s.turnActions[g.id] === 'buy' ? 'disabled' : ''}>最大</button>
             <input id="qty-${g.id}" type="number" class="qty-input" value="1" min="1" max="999">
-            <button class="btn-buy" ${maxBuy <= 0 ? 'disabled' : ''} onclick="Game.buyGood(${g.id}, parseInt(document.getElementById('qty-${g.id}').value) || 1)">買入</button>
-            <button class="btn-sell" ${held <= 0 ? 'disabled' : ''} onclick="Game.sellGood(${g.id}, parseInt(document.getElementById('qty-${g.id}').value) || 1)">賣出</button>
-            ${held > 0 ? `<button class="btn-max" onclick="Game.sellGood(${g.id}, ${held})">全賣</button>` : ''}
+            <button class="btn-buy" ${maxBuy <= 0 || s.turnActions[g.id] ? 'disabled' : ''} onclick="Game.buyGood(${g.id}, parseInt(document.getElementById('qty-${g.id}').value) || 1)">${s.turnActions[g.id] === 'buy' ? '✓ 已買' : '買入'}</button>
+            <button class="btn-sell" ${held <= 0 || s.turnActions[g.id] ? 'disabled' : ''} onclick="Game.sellGood(${g.id}, parseInt(document.getElementById('qty-${g.id}').value) || 1)">${s.turnActions[g.id] === 'sell' ? '✓ 已賣' : '賣出'}</button>
+            ${held > 0 && !s.turnActions[g.id] ? `<button class="btn-max" onclick="Game.sellGood(${g.id}, ${held})">全賣</button>` : ''}
           </div>
         </div>
       `;
