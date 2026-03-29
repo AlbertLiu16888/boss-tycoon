@@ -29,7 +29,7 @@ const NPCS = [
   { id: 4, name: "小花｜有機農場主", icon: "🌻", bonus: { type: "health_per_turn", value: 3 }, description: "每回合健康 +3", unlockAge: 23, flavor: "「身體是革命的本錢，來喝碗雞湯。」" },
   { id: 5, name: "Kevin｜加密貨幣 OG", icon: "🪙", bonus: { type: "crypto_boost", value: 0.5 }, description: "加密類商品漲幅額外 +50%", unlockAge: 26, flavor: "「HODL！這次一定是牛市！」" },
   { id: 6, name: "林律師｜法律顧問", icon: "⚖️", bonus: { type: "event_shield", value: 0.3 }, description: "30% 機率抵擋負面事件", unlockAge: 28, flavor: "「放心，這案子我罩的。」" },
-  { id: 7, name: "Lina｜AI 開發者", icon: "👩‍💻", avatar: "image_3.png", bonus: { type: "forecast_boost", value: 0.6 }, description: "預報命中率提升至 60%，科技類再折 10%", unlockAge: 25, flavor: "「數據不會說謊，下一波行情我已經算出來了。」" },
+  { id: 7, name: "Lina｜AI 開發者", icon: "👩‍💻", avatar: "image_3.jpg", bonus: { type: "forecast_boost", value: 0.6 }, description: "預報命中率提升至 60%，科技類再折 10%", unlockAge: 25, flavor: "「數據不會說謊，下一波行情我已經算出來了。」" },
   { id: 8, name: "阿豪｜外匯操盤手", icon: "💱", bonus: { type: "sell_bonus", value: 0.1 }, description: "所有商品賣出價格 +10%", unlockAge: 30, flavor: "「匯差、價差，都是我的獲利空間。」" },
 ];
 
