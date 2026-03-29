@@ -57,7 +57,9 @@ const EVENTS = [
     forecast: "🏥 衛福部預告：將推出全民免費健檢方案..." },
 
   // 利空事件
-  { id: 11, type: "negative", title: "全台大斷電", desc: "電網崩潰，電子產品損壞，科技商品庫存損失 20%！", icon: "⚡", effect: { type: "category_damage", category: "tech", ratio: 0.2 },
+  { id: 11, type: "negative", title: "全台大斷電", desc: "電網崩潰，電子產品損壞，科技庫存損失 20%，科技商品價格暴跌！", icon: "⚡",
+    effect: { type: "category_damage", category: "tech", ratio: 0.2 },
+    secondaryEffect: { type: "category_crash", category: "tech", multiplier: 0.4 },
     forecast: "⚠️ 台電預警：夏季用電量逼近紅線，電網負載已達 95%..." },
   { id: 12, type: "negative", title: "通膨爆炸", desc: "物價飛漲，本回合生活費加倍！", icon: "📉", effect: { type: "cash_change", value: -200000 },
     forecast: "📉 主計處數據：CPI 年增率連續三月上升，物價壓力升溫中..." },
@@ -80,10 +82,30 @@ const EVENTS = [
     secondaryEffect: { type: "category_boost", category: "food", multiplier: 1.8 },
     forecast: "🌀 氣象署：太平洋上生成今年最強颱風，預計路徑直撲台灣本島..." },
 
+  // 2026 台灣熱搜事件
+  { id: 21, type: "positive", title: "脆上爆紅：開心果拿鐵挑戰！", desc: "全台網紅爭相模仿上車舞並點名開心果拿鐵，價格瘋狂飆升！", icon: "☕🔥",
+    effect: { type: "category_boost", category: "food", multiplier: 5.0 },
+    forecast: "📱 Threads 趨勢觀察：「開心果拿鐵挑戰」標籤流量暴增 2000%，各門市開始預備增量..." },
+  { id: 22, type: "negative", title: "勞動力極度短缺", desc: "缺工潮蔓延至全產業，你的生活成本與營運支出翻倍！", icon: "👷‍♂️",
+    effect: { type: "cost_multiplier", multiplier: 2.0 },
+    forecast: "📊 勞動部警告：服務業缺工率創歷史新高，企業營運成本恐大幅攀升..." },
+  { id: 23, type: "positive", title: "全球能源危機，核融合電池需求激增", desc: "各國搶購綠能設備，碳權與太陽能板價格翻倍再翻倍！", icon: "⚛️",
+    effect: { type: "category_boost", category: "green", multiplier: 3.5 },
+    forecast: "🌍 國際能源署報告：化石燃料價格持續攀升，綠能替代方案成各國採購焦點..." },
+  { id: 24, type: "negative", title: "網紅踢爆：收藏品是仿冒品！", desc: "知名網紅拍片揭發仿冒風波，收藏品市場信心崩盤！", icon: "📹",
+    effect: { type: "category_crash", category: "collectible", multiplier: 0.15 },
+    forecast: "🔍 PTT 八卦板出現爆料文：某知名收藏品系列真偽遭質疑，討論串持續延燒..." },
+  { id: 25, type: "positive", title: "電動車補貼加碼", desc: "政府宣布電動車購車補助翻倍，交通工具類商品大漲！", icon: "🔋",
+    effect: { type: "category_boost", category: "vehicle", multiplier: 2.5 },
+    forecast: "🏛️ 經濟部研議：電動車補助金額將大幅提高，車廠股價已率先反應..." },
+  { id: 26, type: "negative", title: "股市黑天鵝事件", desc: "國際情勢突變，台股重挫千點！所有股票類資產大跌！", icon: "🦢",
+    effect: { type: "category_crash", category: "stock", multiplier: 0.35 },
+    forecast: "🌐 彭博社：地緣政治風險升溫，外資連續五日大舉撤離亞洲股市..." },
+
   // 特殊事件
-  { id: 21, type: "special", title: "神秘商人出現", desc: "一位神秘商人提議以半價出售 AI 伺服器，要買嗎？", icon: "🎭", effect: { type: "special_deal", goodId: 3, discount: 0.5 },
+  { id: 27, type: "special", title: "神秘商人出現", desc: "一位神秘商人提議以半價出售 AI 伺服器，要買嗎？", icon: "🎭", effect: { type: "special_deal", goodId: 3, discount: 0.5 },
     forecast: "🎭 商圈傳言：有位神秘大戶最近在出清科技庫存，價格異常低廉..." },
-  { id: 22, type: "special", title: "時空旅人的預言", desc: "有人聲稱來自未來：「明年碳權會漲 5 倍！」信不信由你。", icon: "🔮", effect: { type: "hint", category: "green" },
+  { id: 28, type: "special", title: "時空旅人的預言", desc: "有人聲稱來自未來：「明年碳權會漲 5 倍！」信不信由你。", icon: "🔮", effect: { type: "hint", category: "green" },
     forecast: null },
 ];
 

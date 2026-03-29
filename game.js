@@ -132,9 +132,12 @@ const Game = {
     if (this.state.gameOver) return;
     const s = this.state;
 
-    // 1. Deduct living cost
-    const livingCost = BASE_LIVING_COST * (1 + (s.turn - 1) * 0.015);
-    s.cash -= Math.round(livingCost);
+    // 1. Deduct living cost (with inflation: +20% every 10 years)
+    const inflationTier = Math.floor((s.turn - 1) / 10);
+    const inflationMult = Math.pow(1.2, inflationTier);
+    const baseCost = BASE_LIVING_COST * (1 + (s.turn - 1) * 0.015) * inflationMult;
+    // cost_multiplier from events applied after event processing
+    s._pendingCostMult = 1;
 
     // 2. Trigger event (forecast system: pending event fires, or roll new)
     s.eventMultipliers = {};
@@ -153,6 +156,11 @@ const Game = {
     if (event) {
       this._applyEvent(event);
     }
+
+    // 3b. Deduct living cost (after event, so cost_multiplier can apply)
+    const finalCost = Math.round(baseCost * (s._pendingCostMult || 1));
+    s.cash -= finalCost;
+    delete s._pendingCostMult;
 
     // 4. Queue next forecast (roll a future event and show its news)
     this._rollForecast();
@@ -347,6 +355,9 @@ const Game = {
           const prop = PROPERTIES.find(p => p.id === pid);
           if (prop) s.cash += Math.round(prop.price * 0.05);
         }
+        break;
+      case 'cost_multiplier':
+        s._pendingCostMult = eff.multiplier;
         break;
       case 'special_deal':
       case 'hint':
@@ -848,6 +859,7 @@ const UI = {
         case 'category_damage': effectText = `💥 ${CATEGORY_NAMES[eff.category] || eff.category}類庫存損失 ${Math.round(eff.ratio * 100)}%`; break;
         case 'random_damage': effectText = `🌀 隨機庫存損失 ${Math.round(eff.ratio * 100)}%`; break;
         case 'property_boost': effectText = `🏠 房產增值收益！`; break;
+        case 'cost_multiplier': effectText = `💸 本回合生活費 x${eff.multiplier}！`; break;
         case 'special_deal': effectText = `🎭 特殊交易機會！`; break;
         case 'hint': effectText = `🔮 這是一個提示...`; break;
       }
