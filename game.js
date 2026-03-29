@@ -16,6 +16,13 @@ function calcNetWorth(state) {
     const prop = PROPERTIES.find(p => p.id === pid);
     if (prop) worth += prop.price;
   }
+  // Vehicle value
+  if (state.vehicles) {
+    for (const vid of state.vehicles) {
+      const v = VEHICLES.find(v => v.id === vid);
+      if (v) worth += v.price;
+    }
+  }
   return worth;
 }
 
@@ -42,6 +49,8 @@ const DEFAULT_STATE = {
   prices: {},          // { goodId: currentPrice }
   prevPrices: {},      // { goodId: lastTurnPrice }
   properties: [],      // [propertyId, ...]
+  vehicles: [],        // [vehicleId, ...]
+  associations: [],    // [associationId, ...]
   friends: [],         // [npcId, ...]
   achievements: [],    // [achievementId, ...]
   warehouseCapacity: 10,
@@ -181,6 +190,19 @@ const Game = {
       if (!npc) continue;
       if (npc.bonus.type === 'rep_per_turn') s.reputation += npc.bonus.value;
       if (npc.bonus.type === 'health_per_turn') s.health = clamp(s.health + npc.bonus.value, 0, 100);
+    }
+
+    // 7b. Check & join associations based on reputation
+    this._checkAssociations();
+
+    // 7c. Apply association yearly bonuses
+    let assocBonus = 0;
+    for (const aid of s.associations) {
+      const assoc = ASSOCIATIONS.find(a => a.id === aid);
+      if (assoc) assocBonus += assoc.yearlyBonus;
+    }
+    if (assocBonus > 0) {
+      s.cash += assocBonus;
     }
 
     // 8. Age-related health decay
@@ -365,6 +387,34 @@ const Game = {
     }
   },
 
+  _checkAssociations() {
+    const s = this.state;
+    for (const assoc of ASSOCIATIONS) {
+      if (!s.associations.includes(assoc.id) && s.reputation >= assoc.repReq) {
+        s.associations.push(assoc.id);
+        UI.showToast(`🏛️ 加入 ${assoc.name}！`, 'yellow');
+      }
+    }
+  },
+
+  buyVehicle(vehicleId) {
+    const s = this.state;
+    const v = VEHICLES.find(v => v.id === vehicleId);
+    if (!v) return;
+    if (s.vehicles.includes(vehicleId)) { UI.showToast('❌ 已經擁有！', 'red'); return; }
+    if (s.cash < v.price) { UI.showToast('❌ 現金不足！', 'red'); return; }
+
+    s.cash -= v.price;
+    s.vehicles.push(vehicleId);
+    s.reputation += v.repBonus;
+
+    UI.showToast(`🚗 購入 ${v.name}！名聲 +${v.repBonus}`, 'cyan');
+    Game._checkAssociations();
+    Game._checkAchievements();
+    UI.updateAll();
+    Game.saveGame();
+  },
+
   buyGood(goodId, qty) {
     const s = this.state;
     const price = s.prices[goodId];
@@ -398,7 +448,12 @@ const Game = {
     if (qty > held) { UI.showToast('❌ 持有數量不足！', 'red'); return; }
 
     const price = s.prices[goodId];
-    const revenue = price * qty;
+    let revenue = price * qty;
+    // 商業傳奇人物 sell bonus (+50%)
+    const legendAssoc = ASSOCIATIONS.find(a => a.sellBonus > 0);
+    if (legendAssoc && s.associations.includes(legendAssoc.id)) {
+      revenue = Math.round(revenue * (1 + legendAssoc.sellBonus));
+    }
     const avgCost = s.avgCost[goodId] || 0;
     const profit = revenue - avgCost * qty;
 
@@ -600,6 +655,58 @@ const UI = {
     `;
     propContainer.innerHTML = propHtml;
 
+    // Vehicles
+    const vehicleContainer = document.getElementById('vehicle-list');
+    let vHtml = '';
+    for (const v of VEHICLES) {
+      const owned = s.vehicles.includes(v.id);
+      const locked = s.age < v.unlockAge;
+      vHtml += `
+        <div class="vehicle-card ${locked ? 'opacity-50' : ''}">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-2">
+              <span class="text-3xl icon-glow">${v.icon}</span>
+              <div>
+                <div class="font-bold text-sm">${v.name} ${owned ? '<span class="text-green-400 text-xs">✓ 已擁有</span>' : ''}</div>
+                <div class="text-xs text-gray-500">${v.description}</div>
+                <div class="text-xs text-purple-400 mt-1">⭐ 名聲 +${v.repBonus}</div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <div class="text-sm font-bold text-yellow-400">$${formatMoney(v.price)}</div>
+              ${locked ? `<div class="text-xs text-gray-500">${v.unlockAge}歲解鎖</div>` :
+                !owned ? `<button class="btn-buy mt-1" onclick="Game.buyVehicle(${v.id})">購買</button>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    vehicleContainer.innerHTML = vHtml;
+
+    // Associations
+    const assocContainer = document.getElementById('association-list');
+    let aHtml = '';
+    for (const a of ASSOCIATIONS) {
+      const joined = s.associations.includes(a.id);
+      const canJoin = s.reputation >= a.repReq;
+      aHtml += `
+        <div class="assoc-card ${!joined && !canJoin ? 'opacity-40' : ''} ${joined ? 'assoc-joined' : ''}">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">${a.icon}</span>
+            <div class="flex-1">
+              <div class="font-bold text-sm">
+                ${a.name}
+                ${joined ? '<span class="text-green-400 text-xs ml-1">✓ 已加入</span>' : ''}
+              </div>
+              <div class="text-xs text-cyan-400">${a.description}</div>
+              ${!joined ? `<div class="text-xs text-gray-500 mt-1">🔒 名聲需達 ${a.repReq}（目前 ${s.reputation}）</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    assocContainer.innerHTML = aHtml;
+
     // Warehouse inventory
     const warehouseContainer = document.getElementById('warehouse-list');
     let whHtml = '';
@@ -764,6 +871,8 @@ const UI = {
       <div class="flex justify-between"><span>💵 最終現金</span><span class="text-green-400">$${formatMoney(s.cash)}</span></div>
       <div class="flex justify-between"><span>📊 總資產</span><span class="text-cyan-400 font-bold">$${formatMoney(netWorth)}</span></div>
       <div class="flex justify-between"><span>🏠 房產數</span><span>${s.properties.length}</span></div>
+      <div class="flex justify-between"><span>🚗 名車數</span><span>${s.vehicles.length}</span></div>
+      <div class="flex justify-between"><span>🏛️ 商會</span><span>${s.associations.length} / ${ASSOCIATIONS.length}</span></div>
       <div class="flex justify-between"><span>👥 朋友數</span><span>${s.friends.length}</span></div>
       <div class="flex justify-between"><span>⭐ 名聲</span><span class="text-purple-400">${s.reputation}</span></div>
       <div class="flex justify-between"><span>❤️ 健康</span><span>${s.health}</span></div>

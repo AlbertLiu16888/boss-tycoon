@@ -114,5 +114,24 @@ const LIFE_RANKS = [
   { min: 5000000000, title: "神級投資人", icon: "🌟", desc: "超神！你是台灣巴菲特！" },
 ];
 
+// ===== 交通工具 =====
+const VEHICLES = [
+  { id: 1, name: "Tesla Model 3", icon: "🚗", price: 1800000, repBonus: 8, unlockAge: 24, description: "電動車入門款，環保又時尚" },
+  { id: 2, name: "Mercedes-Benz S-Class", icon: "🚘", price: 6000000, repBonus: 25, unlockAge: 28, description: "德國豪華旗艦，商務首選" },
+  { id: 3, name: "Tesla Model S Plaid", icon: "⚡", price: 4500000, repBonus: 18, unlockAge: 26, description: "極速電動轎跑，科技新貴標配" },
+  { id: 4, name: "Porsche 911 Turbo S", icon: "🏎️", price: 12000000, repBonus: 45, unlockAge: 32, description: "經典跑車，速度與品味的象徵" },
+  { id: 5, name: "Lamborghini Huracán", icon: "🏁", price: 18000000, repBonus: 65, unlockAge: 36, description: "義大利超跑，霸總必備座駕" },
+  { id: 6, name: "Ferrari SF90 Stradale", icon: "🐎", price: 25000000, repBonus: 85, unlockAge: 38, description: "躍馬旗艦超跑，頂級收藏品" },
+];
+
+// ===== 商會系統（名聲門檻加成）=====
+const ASSOCIATIONS = [
+  { id: 1, name: "青年商會理事長", icon: "🤝", repReq: 20, yearlyBonus: 500000, sellBonus: 0, description: "結識年輕企業家，每年加成 50 萬" },
+  { id: 2, name: "BNI 董事顧問", icon: "💼", repReq: 50, yearlyBonus: 1000000, sellBonus: 0, description: "國際商務引薦組織，每年加成 100 萬" },
+  { id: 3, name: "獅子會地區總監", icon: "🦁", repReq: 120, yearlyBonus: 3000000, sellBonus: 0, description: "國際服務社團領袖，每年加成 300 萬" },
+  { id: 4, name: "扶輪社地區總監", icon: "⚙️", repReq: 200, yearlyBonus: 5000000, sellBonus: 0, description: "國際扶輪領導者，每年加成 500 萬" },
+  { id: 5, name: "商業傳奇人物", icon: "👑", repReq: 500, yearlyBonus: 10000000, sellBonus: 0.5, description: "傳奇霸總，每年 1000 萬＋賣出多 50%" },
+];
+
 // ===== 生活費基準 =====
 const BASE_LIVING_COST = 50000; // 每回合基本生活費（降低難度）

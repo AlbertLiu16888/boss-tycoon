@@ -1,13 +1,14 @@
 // ===== Leaderboard System =====
-// Uses localStorage for local records + a free cloud API for global rankings
+// Uses localStorage for local records + Google Sheets for global rankings
 
 const LEADERBOARD_STORAGE_KEY = 'boss_tycoon_leaderboard';
-const GLOBAL_API_URL = 'https://jsonblob.com/api/jsonBlob';
-const GLOBAL_BLOB_KEY = 'boss_tycoon_global_lb';
+
+// ⚠️ 請將此 URL 替換為你部署的 Google Apps Script 網址
+// 部署步驟請見 google-apps-script.js
+const GOOGLE_SHEET_API_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
 const Leaderboard = {
   currentTab: 'local',
-  globalBlobId: null,
   globalData: null,
   lastScore: null,
 
@@ -26,47 +27,24 @@ const Leaderboard = {
     const entries = this.getLocal();
     entries.push(entry);
     entries.sort((a, b) => b.netWorth - a.netWorth);
-    // Keep top 50
     if (entries.length > 50) entries.length = 50;
     this.saveLocal(entries);
     return entries;
   },
 
-  // ===== Global Leaderboard =====
-  _getGlobalBlobId() {
-    return localStorage.getItem(GLOBAL_BLOB_KEY) || null;
-  },
-
-  _setGlobalBlobId(id) {
-    localStorage.setItem(GLOBAL_BLOB_KEY, id);
+  // ===== Google Sheets Global Leaderboard =====
+  _isConfigured() {
+    return GOOGLE_SHEET_API_URL && !GOOGLE_SHEET_API_URL.includes('YOUR_GOOGLE');
   },
 
   async fetchGlobal() {
+    if (!this._isConfigured()) return null;
     try {
-      let blobId = this._getGlobalBlobId();
-
-      if (!blobId) {
-        // Try to create a new blob
-        const res = await fetch(GLOBAL_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ leaderboard: [] }),
-        });
-        if (res.ok) {
-          const loc = res.headers.get('Location') || res.url;
-          blobId = loc.split('/').pop();
-          this._setGlobalBlobId(blobId);
-        }
-      }
-
-      if (blobId) {
-        const res = await fetch(`${GLOBAL_API_URL}/${blobId}`);
-        if (res.ok) {
-          const data = await res.json();
-          this.globalBlobId = blobId;
-          this.globalData = data.leaderboard || [];
-          return this.globalData;
-        }
+      const res = await fetch(GOOGLE_SHEET_API_URL);
+      if (res.ok) {
+        const data = await res.json();
+        this.globalData = data.leaderboard || [];
+        return this.globalData;
       }
     } catch (e) {
       console.warn('Global leaderboard unavailable:', e);
@@ -75,24 +53,15 @@ const Leaderboard = {
   },
 
   async pushGlobal(entry) {
+    if (!this._isConfigured()) return false;
     try {
-      if (!this.globalBlobId) await this.fetchGlobal();
-      if (!this.globalBlobId) return false;
-
-      const data = this.globalData || [];
-      data.push(entry);
-      data.sort((a, b) => b.netWorth - a.netWorth);
-      if (data.length > 100) data.length = 100;
-
-      const res = await fetch(`${GLOBAL_API_URL}/${this.globalBlobId}`, {
-        method: 'PUT',
+      const res = await fetch(GOOGLE_SHEET_API_URL, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leaderboard: data }),
+        body: JSON.stringify(entry),
+        mode: 'no-cors', // Apps Script requires this for POST from browser
       });
-      if (res.ok) {
-        this.globalData = data;
-        return true;
-      }
+      return true;
     } catch (e) {
       console.warn('Failed to push to global leaderboard:', e);
     }
@@ -147,7 +116,7 @@ const Leaderboard = {
     // Save locally
     this.addLocalEntry(entry);
 
-    // Push to global
+    // Push to Google Sheets
     this.pushGlobal({ ...entry });
 
     this.closeNameModal();
@@ -199,11 +168,24 @@ const Leaderboard = {
       return;
     }
 
-    container.innerHTML = entries.map((e, i) => this._renderEntry(e, i)).join('');
+    // Show top 10
+    container.innerHTML = entries.slice(0, 10).map((e, i) => this._renderEntry(e, i)).join('');
   },
 
   async _renderGlobal() {
     const container = document.getElementById('leaderboard-list');
+
+    if (!this._isConfigured()) {
+      container.innerHTML = `
+        <div class="text-center py-8 text-gray-500">
+          <div class="text-3xl mb-2">⚙️</div>
+          <p>全球排行榜尚未設定</p>
+          <p class="text-xs mt-1">請參考 google-apps-script.js 完成設定</p>
+        </div>
+      `;
+      return;
+    }
+
     container.innerHTML = `
       <div class="text-center py-8 text-gray-500">
         <div class="text-2xl mb-2 animate-pulse-slow">🌐</div>
@@ -224,7 +206,8 @@ const Leaderboard = {
       return;
     }
 
-    container.innerHTML = data.map((e, i) => this._renderEntry(e, i)).join('');
+    // Show top 10
+    container.innerHTML = data.slice(0, 10).map((e, i) => this._renderEntry(e, i)).join('');
   },
 
   _renderEntry(entry, index) {
