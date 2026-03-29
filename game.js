@@ -141,6 +141,7 @@ const Game = {
 
     // 2. Trigger event (forecast system: pending event fires, or roll new)
     s.eventMultipliers = {};
+    delete s._feeDiscount; // reset per-turn fee discount
     let event = null;
     if (s.pendingEvent) {
       // Forecasted event fires this turn
@@ -278,9 +279,10 @@ const Game = {
 
   _rollForecast() {
     const s = this.state;
-    // 40% chance to queue a forecasted event for next turn
-    if (s.pendingEvent) return; // already have one queued
-    if (Math.random() > 0.4) return;
+    // Base 40% chance, boosted to 60% by Lina (forecast_boost NPC)
+    if (s.pendingEvent) return;
+    const forecastChance = s.friends.includes(7) ? 0.6 : 0.4;
+    if (Math.random() > forecastChance) return;
     // Pick a random event that has a forecast
     const forecastable = EVENTS.filter(e => e.forecast);
     if (forecastable.length === 0) return;
@@ -359,6 +361,15 @@ const Game = {
       case 'cost_multiplier':
         s._pendingCostMult = eff.multiplier;
         break;
+      case 'global_crash':
+        // All categories get hit
+        for (const cat of ['food', 'tech', 'collectible', 'green', 'stock', 'crypto', 'vehicle']) {
+          s.eventMultipliers[cat] = (s.eventMultipliers[cat] || 1) * eff.multiplier;
+        }
+        break;
+      case 'fee_discount':
+        s._feeDiscount = eff.value;
+        break;
       case 'special_deal':
       case 'hint':
         // These are informational
@@ -434,11 +445,18 @@ const Game = {
     if (totalCost > s.cash) { UI.showToast('❌ 現金不足！', 'red'); return; }
     if (currentCount + qty > s.warehouseCapacity) { UI.showToast('❌ 倉庫空間不足！', 'red'); return; }
 
-    // Apply tech discount if friend
+    // Apply tech discount if friend (小安 15% + Lina 10%)
     let finalCost = totalCost;
     const good = GOODS.find(g => g.id === goodId);
-    if (good && good.category === 'tech' && s.friends.includes(1)) {
-      finalCost = Math.round(totalCost * 0.85);
+    if (good && good.category === 'tech') {
+      let discount = 1;
+      if (s.friends.includes(1)) discount *= 0.85; // 小安
+      if (s.friends.includes(7)) discount *= 0.90; // Lina
+      finalCost = Math.round(totalCost * discount);
+    }
+    // Apply fee discount from event
+    if (s._feeDiscount) {
+      finalCost = Math.round(finalCost * s._feeDiscount);
     }
 
     s.cash -= finalCost;
@@ -459,6 +477,10 @@ const Game = {
 
     const price = s.prices[goodId];
     let revenue = price * qty;
+    // 阿豪 sell bonus (+10%)
+    if (s.friends.includes(8)) {
+      revenue = Math.round(revenue * 1.1);
+    }
     // 商業傳奇人物 sell bonus (+50%)
     const legendAssoc = ASSOCIATIONS.find(a => a.sellBonus > 0);
     if (legendAssoc && s.associations.includes(legendAssoc.id)) {
@@ -860,6 +882,8 @@ const UI = {
         case 'random_damage': effectText = `🌀 隨機庫存損失 ${Math.round(eff.ratio * 100)}%`; break;
         case 'property_boost': effectText = `🏠 房產增值收益！`; break;
         case 'cost_multiplier': effectText = `💸 本回合生活費 x${eff.multiplier}！`; break;
+        case 'global_crash': effectText = `📉 所有商品價格 x${eff.multiplier}！全面下修！`; break;
+        case 'fee_discount': effectText = `🏷️ 本回合買入成本降低 ${Math.round((1 - eff.value) * 100)}%！`; break;
         case 'special_deal': effectText = `🎭 特殊交易機會！`; break;
         case 'hint': effectText = `🔮 這是一個提示...`; break;
       }

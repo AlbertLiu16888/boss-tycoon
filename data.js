@@ -29,6 +29,8 @@ const NPCS = [
   { id: 4, name: "小花｜有機農場主", icon: "🌻", bonus: { type: "health_per_turn", value: 3 }, description: "每回合健康 +3", unlockAge: 23, flavor: "「身體是革命的本錢，來喝碗雞湯。」" },
   { id: 5, name: "Kevin｜加密貨幣 OG", icon: "🪙", bonus: { type: "crypto_boost", value: 0.5 }, description: "加密類商品漲幅額外 +50%", unlockAge: 26, flavor: "「HODL！這次一定是牛市！」" },
   { id: 6, name: "林律師｜法律顧問", icon: "⚖️", bonus: { type: "event_shield", value: 0.3 }, description: "30% 機率抵擋負面事件", unlockAge: 28, flavor: "「放心，這案子我罩的。」" },
+  { id: 7, name: "Lina｜AI 開發者", icon: "👩‍💻", avatar: "image_3.png", bonus: { type: "forecast_boost", value: 0.6 }, description: "預報命中率提升至 60%，科技類再折 10%", unlockAge: 25, flavor: "「數據不會說謊，下一波行情我已經算出來了。」" },
+  { id: 8, name: "阿豪｜外匯操盤手", icon: "💱", bonus: { type: "sell_bonus", value: 0.1 }, description: "所有商品賣出價格 +10%", unlockAge: 30, flavor: "「匯差、價差，都是我的獲利空間。」" },
 ];
 
 // ===== 隨機事件庫 =====
@@ -102,10 +104,17 @@ const EVENTS = [
     effect: { type: "category_crash", category: "stock", multiplier: 0.35 },
     forecast: "🌐 彭博社：地緣政治風險升溫，外資連續五日大舉撤離亞洲股市..." },
 
+  { id: 27, type: "negative", title: "聯準會意外升息 2 碼", desc: "全球熱錢退潮，除了現金，所有商品市場價格全面下修！", icon: "🏦",
+    effect: { type: "global_crash", multiplier: 0.7 },
+    forecast: "📉 路透社：聯準會官員暗示通膨壓力超預期，市場憂心利率將大幅上調..." },
+  { id: 28, type: "positive", title: "券商手續費價格戰開打！", desc: "各大券商競爭白熱化，本回合買賣成本大幅降低！", icon: "🏷️",
+    effect: { type: "fee_discount", value: 0.5 },
+    forecast: "💰 金管會鬆綁：券商手續費折扣下限取消，各家搶推優惠方案..." },
+
   // 特殊事件
-  { id: 27, type: "special", title: "神秘商人出現", desc: "一位神秘商人提議以半價出售 AI 伺服器，要買嗎？", icon: "🎭", effect: { type: "special_deal", goodId: 3, discount: 0.5 },
+  { id: 29, type: "special", title: "神秘商人出現", desc: "一位神秘商人提議以半價出售 AI 伺服器，要買嗎？", icon: "🎭", effect: { type: "special_deal", goodId: 3, discount: 0.5 },
     forecast: "🎭 商圈傳言：有位神秘大戶最近在出清科技庫存，價格異常低廉..." },
-  { id: 28, type: "special", title: "時空旅人的預言", desc: "有人聲稱來自未來：「明年碳權會漲 5 倍！」信不信由你。", icon: "🔮", effect: { type: "hint", category: "green" },
+  { id: 30, type: "special", title: "時空旅人的預言", desc: "有人聲稱來自未來：「明年碳權會漲 5 倍！」信不信由你。", icon: "🔮", effect: { type: "hint", category: "green" },
     forecast: null },
 ];
 
