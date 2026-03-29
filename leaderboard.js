@@ -1,11 +1,13 @@
 // ===== Leaderboard System =====
 // Uses localStorage for local records + Google Sheets for global rankings
+// 使用現有的多遊戲 Google Apps Script API
 
 const LEADERBOARD_STORAGE_KEY = 'boss_tycoon_leaderboard';
+const GAME_ID = 'bosstycoon';
 
-// ⚠️ 請將此 URL 替換為你部署的 Google Apps Script 網址
-// 部署步驟請見 google-apps-script.js
-const GOOGLE_SHEET_API_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+// ⚠️ 請將此 URL 替換為你已部署的 Google Apps Script 網址
+// 這是共用的多遊戲排行榜 API，同一個 URL 支援多個遊戲
+const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbwAhuS5A02qLzdvUIzgCabG0FhTJdxlLpQBmAcJzIOgO3GvzMBEzilIzeblsPCnzi-m/exec';
 
 const Leaderboard = {
   currentTab: 'local',
@@ -32,7 +34,7 @@ const Leaderboard = {
     return entries;
   },
 
-  // ===== Google Sheets Global Leaderboard =====
+  // ===== Google Sheets Global Leaderboard (Multi-Game API) =====
   _isConfigured() {
     return GOOGLE_SHEET_API_URL && !GOOGLE_SHEET_API_URL.includes('YOUR_GOOGLE');
   },
@@ -40,11 +42,27 @@ const Leaderboard = {
   async fetchGlobal() {
     if (!this._isConfigured()) return null;
     try {
-      const res = await fetch(GOOGLE_SHEET_API_URL);
+      // API 回傳格式: [{ name, score, date }, ...]
+      const url = `${GOOGLE_SHEET_API_URL}?action=getScores&game=${GAME_ID}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        this.globalData = data.leaderboard || [];
-        return this.globalData;
+        if (Array.isArray(data)) {
+          this.globalData = data.map(s => ({
+            name: String(s.name || '匿名'),
+            netWorth: Number(s.score) || 0,
+            rank: '',
+            rankIcon: '',
+            turns: 0,
+            age: 0,
+            achievements: 0,
+            reputation: 0,
+            timestamp: s.date ? new Date(s.date).getTime() : 0,
+          }));
+          // Already sorted by score desc from API, take top 10
+          this.globalData = this.globalData.slice(0, 10);
+          return this.globalData;
+        }
       }
     } catch (e) {
       console.warn('Global leaderboard unavailable:', e);
@@ -55,11 +73,18 @@ const Leaderboard = {
   async pushGlobal(entry) {
     if (!this._isConfigured()) return false;
     try {
-      const res = await fetch(GOOGLE_SHEET_API_URL, {
+      // 使用現有 API: name (max 12 chars) + score (netWorth)
+      const payload = {
+        action: 'addScore',
+        game: GAME_ID,
+        name: entry.name,
+        score: entry.netWorth,
+      };
+      await fetch(GOOGLE_SHEET_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
-        mode: 'no-cors', // Apps Script requires this for POST from browser
+        body: JSON.stringify(payload),
+        mode: 'no-cors',
       });
       return true;
     } catch (e) {
@@ -180,7 +205,7 @@ const Leaderboard = {
         <div class="text-center py-8 text-gray-500">
           <div class="text-3xl mb-2">⚙️</div>
           <p>全球排行榜尚未設定</p>
-          <p class="text-xs mt-1">請參考 google-apps-script.js 完成設定</p>
+          <p class="text-xs mt-1">請設定 GOOGLE_SHEET_API_URL</p>
         </div>
       `;
       return;
@@ -222,11 +247,12 @@ const Leaderboard = {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-1">
             <span class="font-bold text-sm truncate">${this._escapeHtml(entry.name)}</span>
-            <span class="text-xs">${entry.rankIcon}</span>
+            <span class="text-xs">${entry.rankIcon || ''}</span>
             ${isRecent ? '<span class="text-xs text-yellow-400 ml-1">← 你</span>' : ''}
           </div>
           <div class="text-xs text-gray-500">
-            ${entry.rank} ｜ ${entry.turns}回合 ｜ 🏆${entry.achievements}
+            ${entry.rank ? entry.rank + ' ｜ ' : ''}${entry.turns ? entry.turns + '回合 ｜ ' : ''}${entry.achievements ? '🏆' + entry.achievements : ''}
+            ${!entry.rank && !entry.turns && !entry.achievements ? '全球玩家' : ''}
           </div>
         </div>
         <div class="text-right flex-shrink-0">
