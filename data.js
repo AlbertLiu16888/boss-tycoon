@@ -107,9 +107,9 @@ const EVENTS = [
   { id: 27, type: "negative", title: "聯準會意外升息 2 碼", desc: "全球熱錢退潮，除了現金，所有商品市場價格全面下修！", icon: "🏦",
     effect: { type: "global_crash", multiplier: 0.7 },
     forecast: "📉 路透社：聯準會官員暗示通膨壓力超預期，市場憂心利率將大幅上調..." },
-  { id: 28, type: "positive", title: "券商手續費價格戰開打！", desc: "各大券商競爭白熱化，本回合買賣成本大幅降低！", icon: "🏷️",
-    effect: { type: "fee_discount", value: 0.5 },
-    forecast: "💰 金管會鬆綁：券商手續費折扣下限取消，各家搶推優惠方案..." },
+  { id: 28, type: "positive", title: "玉山券商手續費價格戰開打！", desc: "各大券商競爭白熱化，祭出 2.8 折超低優惠，本回合買賣摩擦成本大幅降低！", icon: "🏷️",
+    effect: { type: "fee_discount", value: 0.28 },
+    forecast: "💰 金管會鬆綁：券商手續費折扣下限取消，各家搶推 2.8 折優惠方案..." },
 
   // 特殊事件
   { id: 29, type: "special", title: "神秘商人出現", desc: "一位神秘商人提議以半價出售 AI 伺服器，要買嗎？", icon: "🎭", effect: { type: "special_deal", goodId: 3, discount: 0.5 },

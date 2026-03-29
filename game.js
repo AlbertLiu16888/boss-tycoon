@@ -62,6 +62,7 @@ const DEFAULT_STATE = {
   eventMultipliers: {},  // { category: multiplier } for current turn
   pendingEvent: null,    // event queued from forecast (fires next turn)
   forecastNews: null,    // forecast headline shown in ticker
+  linaUsedThisTurn: false, // Lina "打聽消息" once per turn
   gameOver: false,
 };
 
@@ -141,6 +142,7 @@ const Game = {
 
     // 2. Trigger event (forecast system: pending event fires, or roll new)
     s.eventMultipliers = {};
+    s.linaUsedThisTurn = false;
     delete s._feeDiscount; // reset per-turn fee discount
     let event = null;
     if (s.pendingEvent) {
@@ -526,6 +528,42 @@ const Game = {
     Game.saveGame();
   },
 
+  askLina() {
+    const s = this.state;
+    if (!s.friends.includes(7)) { UI.showToast('❌ 還沒結交 Lina！', 'red'); return; }
+    if (s.linaUsedThisTurn) { UI.showToast('💬 Lina 這回合已經聊過了', 'yellow'); return; }
+    s.linaUsedThisTurn = true;
+
+    // 30% chance to reveal next event
+    if (Math.random() < 0.3) {
+      // If there's already a pending event, reveal it
+      if (s.pendingEvent) {
+        const evt = EVENTS.find(e => e.id === s.pendingEvent);
+        if (evt) {
+          UI.showToast(`🔮 Lina 密語：「下一年…${evt.title}」`, 'cyan');
+          this.saveGame();
+          UI.updateAll();
+          return;
+        }
+      }
+      // Otherwise, queue one and reveal
+      const forecastable = EVENTS.filter(e => e.forecast);
+      if (forecastable.length > 0) {
+        const evt = forecastable[Math.floor(Math.random() * forecastable.length)];
+        s.pendingEvent = evt.id;
+        s.forecastNews = evt.forecast;
+        UI.showToast(`🔮 Lina 密語：「下一年…${evt.title}」`, 'cyan');
+        this._updateForecastTicker();
+        this.saveGame();
+        UI.updateAll();
+        return;
+      }
+    }
+    UI.showToast('💤 Lina 正在忙碌中，沒有獲得情報', 'yellow');
+    this.saveGame();
+    UI.updateAll();
+  },
+
   expandWarehouse() {
     const s = this.state;
     const cost = s.warehouseCapacity * 50000;
@@ -799,19 +837,31 @@ const UI = {
       const isFriend = s.friends.includes(npc.id);
       const locked = s.age < npc.unlockAge;
 
+      // Lina gets an avatar image if available, and an "ask intel" button
+      const avatarHtml = npc.avatar
+        ? `<img src="${npc.avatar}" alt="${npc.name}" class="w-10 h-10 rounded-full object-cover border" style="border-color:var(--border-neon);" onerror="this.style.display='none';this.nextElementSibling.style.display=''">`
+        : '';
+      const fallbackIcon = npc.avatar ? `<span class="text-3xl" style="display:none">${npc.icon}</span>` : `<span class="text-3xl">${npc.icon}</span>`;
+
+      // "打聽消息" button for Lina (id:7)
+      const linaBtn = (npc.id === 7 && isFriend)
+        ? `<button class="btn-buy mt-2" style="background:rgba(0,242,254,0.12);border-color:rgba(0,242,254,0.4);color:var(--accent-cyan);" onclick="Game.askLina()" ${s.linaUsedThisTurn ? 'disabled' : ''}>🔮 打聽消息${s.linaUsedThisTurn ? '（已使用）' : ''}</button>`
+        : '';
+
       html += `
         <div class="social-card ${locked && !isFriend ? 'opacity-40' : ''}">
           <div class="flex items-start gap-3">
-            <span class="text-3xl">${npc.icon}</span>
+            ${avatarHtml}${fallbackIcon}
             <div class="flex-1">
               <div class="font-bold text-sm">
                 ${npc.name}
                 ${isFriend ? '<span class="text-green-400 text-xs ml-1">✓ 朋友</span>' : ''}
               </div>
-              <div class="text-xs text-cyan-400">${npc.description}</div>
-              ${isFriend ? `<div class="text-xs text-gray-500 italic mt-1">${npc.flavor}</div>` :
-                locked ? `<div class="text-xs text-gray-600 mt-1">🔒 ${npc.unlockAge}歲後有機會遇到</div>` :
-                `<div class="text-xs text-gray-600 mt-1">🎲 隨機遇到</div>`}
+              <div class="text-xs" style="color:var(--accent-cyan);">${npc.description}</div>
+              ${isFriend ? `<div class="text-xs italic mt-1" style="color:var(--text-sub);">${npc.flavor}</div>` :
+                locked ? `<div class="text-xs mt-1" style="color:var(--text-dim);">🔒 ${npc.unlockAge}歲後有機會遇到</div>` :
+                `<div class="text-xs mt-1" style="color:var(--text-dim);">🎲 隨機遇到</div>`}
+              ${linaBtn}
             </div>
           </div>
         </div>
