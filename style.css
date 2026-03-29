@@ -33,7 +33,7 @@ html, body { height: 100%; overflow: hidden; }
 body {
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--bg-deep-blue);
-  background-image: url('image_0.png');
+  background-image: url('bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
