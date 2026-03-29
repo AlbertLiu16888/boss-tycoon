@@ -285,13 +285,12 @@ const Game = {
     const s = this.state;
     const ticker = document.getElementById('ticker-text');
     if (s.forecastNews) {
-      // Show forecast news - this hints at what's coming next turn
       ticker.textContent = s.forecastNews;
-      ticker.classList.add('text-yellow-300');
-      ticker.classList.remove('text-cyan-300');
+      ticker.classList.add('ticker-forecast');
+      ticker.style.color = '';
     } else {
-      ticker.classList.remove('text-yellow-300');
-      ticker.classList.add('text-cyan-300');
+      ticker.classList.remove('ticker-forecast');
+      ticker.style.color = 'var(--accent-cyan)';
     }
   },
 
@@ -517,27 +516,51 @@ const UI = {
     document.getElementById(`tab-${tab}`).classList.remove('hidden');
     document.querySelectorAll('.tab-btn').forEach(el => {
       const isActive = el.dataset.tab === tab;
-      el.classList.toggle('text-cyan-400', isActive);
-      el.classList.toggle('border-t-2', isActive);
-      el.classList.toggle('border-cyan-400', isActive);
-      el.classList.toggle('text-gray-500', !isActive);
-      el.classList.toggle('border-t-2', isActive);
+      el.classList.toggle('tab-active', isActive);
+      el.style.color = isActive ? 'var(--accent-cyan)' : 'var(--text-dim)';
     });
     this.updateAll();
+  },
+
+  _prevCash: null,
+  _prevNetWorth: null,
+
+  _triggerMoneyPop(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.classList.remove('money-changed', 'networth-changed');
+    void el.offsetWidth; // force reflow
+    el.classList.add(elementId === 'networth-display' ? 'networth-changed' : 'money-changed');
+    setTimeout(() => el.classList.remove('money-changed', 'networth-changed'), 500);
   },
 
   updateAll() {
     if (!Game.state) return;
     const s = Game.state;
 
+    const newCash = s.cash;
+    const newNetWorth = calcNetWorth(s);
+
     // Top bar
     document.getElementById('age-display').textContent = `${s.age}歲`;
     document.getElementById('year-display').textContent = `第 ${s.turn} / 40 年`;
     document.getElementById('cash-display').textContent = `$${formatMoney(s.cash)}`;
-    document.getElementById('health-bar').style.width = `${s.health}%`;
-    document.getElementById('health-bar').className = `h-2 rounded-full transition-all ${
-      s.health > 60 ? 'bg-green-500' : s.health > 30 ? 'bg-yellow-500' : 'bg-red-500'
-    }`;
+
+    // Trigger money pop animations on change
+    if (this._prevCash !== null && newCash !== this._prevCash) {
+      this._triggerMoneyPop('cash-display');
+    }
+    if (this._prevNetWorth !== null && newNetWorth !== this._prevNetWorth) {
+      this._triggerMoneyPop('networth-display');
+    }
+    this._prevCash = newCash;
+    this._prevNetWorth = newNetWorth;
+
+    const hbar = document.getElementById('health-bar');
+    hbar.style.width = `${s.health}%`;
+    const hcolor = s.health > 60 ? '#00F2FE' : s.health > 30 ? '#D0FF00' : '#FF2079';
+    hbar.style.background = hcolor;
+    hbar.style.color = hcolor;
     document.getElementById('rep-display').textContent = s.reputation;
     document.getElementById('networth-display').textContent = `$${formatMoney(calcNetWorth(s))}`;
     document.getElementById('inventory-count').textContent = getInventoryCount(s);
@@ -720,17 +743,17 @@ const UI = {
       const cost = (s.avgCost[id] || 0) * qty;
       const profit = value - cost;
       whHtml += `
-        <div class="bg-gray-800 rounded-lg p-3 flex justify-between items-center">
+        <div class="rounded-lg p-3 flex justify-between items-center" style="background:var(--bg-panel);border:1px solid rgba(0,242,254,0.08);">
           <div>
             <span>${good.icon} ${good.name} x${qty}</span>
-            <div class="text-xs ${profit >= 0 ? 'text-green-400' : 'text-red-400'}">
+            <div class="text-xs" style="color:${profit >= 0 ? 'var(--accent-yellow)' : 'var(--accent-pink)'};">
               市值 $${formatMoney(value)} (${profit >= 0 ? '+' : ''}$${formatMoney(profit)})
             </div>
           </div>
         </div>
       `;
     }
-    if (!hasItems) whHtml = '<div class="text-gray-600 text-sm text-center py-4">倉庫空空的，快去市場進貨吧！</div>';
+    if (!hasItems) whHtml = '<div class="text-sm text-center py-4" style="color:var(--text-dim);">倉庫空空的，快去市場進貨吧！</div>';
     warehouseContainer.innerHTML = whHtml;
   },
 
@@ -796,17 +819,15 @@ const UI = {
     document.getElementById('event-icon').style.fontSize = '3rem';
     document.getElementById('event-title').textContent = event.title;
 
-    // Color the modal border based on event type
+    // Color the modal based on event type
     const modalBox = modal.querySelector('.relative');
+    modalBox.classList.remove('event-positive', 'event-negative', 'event-special');
     if (event.type === 'positive') {
-      modalBox.style.borderColor = '#22c55e';
-      modalBox.style.boxShadow = '0 0 20px rgba(34,197,94,0.3), inset 0 0 15px rgba(34,197,94,0.1)';
+      modalBox.classList.add('event-positive');
     } else if (event.type === 'negative') {
-      modalBox.style.borderColor = '#ef4444';
-      modalBox.style.boxShadow = '0 0 20px rgba(239,68,68,0.3), inset 0 0 15px rgba(239,68,68,0.1)';
+      modalBox.classList.add('event-negative');
     } else {
-      modalBox.style.borderColor = '#a855f7';
-      modalBox.style.boxShadow = '0 0 20px rgba(168,85,247,0.3), inset 0 0 15px rgba(168,85,247,0.1)';
+      modalBox.classList.add('event-special');
     }
 
     let desc = event.desc;
@@ -887,14 +908,17 @@ const UI = {
   showToast(msg, color = 'cyan') {
     const toast = document.getElementById('toast');
     toast.textContent = msg;
-    toast.className = `fixed top-16 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300`;
-    const colors = {
-      cyan: 'bg-cyan-900 text-cyan-300 border border-cyan-700',
-      green: 'bg-green-900 text-green-300 border border-green-700',
-      red: 'bg-red-900 text-red-300 border border-red-700',
-      yellow: 'bg-yellow-900 text-yellow-300 border border-yellow-700',
+    toast.className = 'fixed top-16 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 toast-base';
+    const colorMap = {
+      cyan:   { bg: 'rgba(0,242,254,0.12)', border: 'rgba(0,242,254,0.4)', text: '#00F2FE' },
+      green:  { bg: 'rgba(208,255,0,0.12)', border: 'rgba(208,255,0,0.4)', text: '#D0FF00' },
+      red:    { bg: 'rgba(255,32,121,0.12)', border: 'rgba(255,32,121,0.4)', text: '#FF2079' },
+      yellow: { bg: 'rgba(255,215,0,0.12)', border: 'rgba(255,215,0,0.4)', text: '#FFD700' },
     };
-    toast.classList.add(...(colors[color] || colors.cyan).split(' '));
+    const c = colorMap[color] || colorMap.cyan;
+    toast.style.background = c.bg;
+    toast.style.border = `1px solid ${c.border}`;
+    toast.style.color = c.text;
     toast.style.opacity = '1';
 
     clearTimeout(this.toastTimer);

@@ -9,132 +9,139 @@
 tailwind.config = {
   theme: {
     extend: {
-      colors: { app: '#030712' }
+      colors: {
+        app: '#08081A',
+        'neon-cyan': '#00F2FE',
+        'neon-pink': '#FF2079',
+        'neon-yellow': '#D0FF00',
+        'neon-purple': '#BF5AF2',
+        'neon-gold': '#FFD700',
+      }
     }
   }
 }
 </script>
 <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-app text-gray-100 flex flex-col max-w-lg mx-auto relative" style="background:#030712;color:#f3f4f6;">
+<body class="bg-app text-white flex flex-col max-w-lg mx-auto relative">
 
 <!-- Splash Screen -->
-<div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center" style="background:#030712;">
+<div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center splash-bg">
   <div class="text-center px-6">
-    <div class="text-6xl mb-4 neon-glow-text animate-pulse-slow">💰</div>
-    <h1 class="text-3xl font-black neon-text mb-2">霸總養成計畫</h1>
-    <p class="text-cyan-400 text-lg mb-8 tracking-widest">2026 逆襲人生</p>
+    <div class="text-7xl mb-6 animate-pulse-slow">💰</div>
+    <h1 class="splash-title mb-3">霸總養成計畫</h1>
+    <p class="splash-subtitle text-lg mb-10">2026 逆襲人生</p>
     <div class="space-y-3 w-64 mx-auto">
-      <button onclick="Game.newGame()" class="w-full py-3 rounded-xl font-bold text-lg transition neon-border text-white" style="background:#0891b2;">
+      <button onclick="Game.newGame()" class="w-full py-3.5 rounded-xl text-lg splash-btn-primary">
         🚀 新遊戲
       </button>
-      <button id="continue-btn" onclick="Game.loadGame()" class="w-full py-3 rounded-xl font-bold text-lg transition text-white hidden" style="background:#1f2937;border:1px solid #374151;">
+      <button id="continue-btn" onclick="Game.loadGame()" class="w-full py-3.5 rounded-xl text-lg splash-btn-secondary hidden">
         📂 繼續遊戲
       </button>
-      <button onclick="Leaderboard.showModal()" class="w-full py-3 rounded-xl font-bold text-lg transition text-white" style="background:#1f2937;border:1px solid #92400e;">
+      <button onclick="Leaderboard.showModal()" class="w-full py-3.5 rounded-xl text-lg splash-btn-gold">
         🏅 排行榜
       </button>
     </div>
-    <p class="text-gray-500 text-xs mt-6">在 40 年內達成 10 億資產目標</p>
+    <p class="text-sm mt-8" style="color:var(--text-dim);">在 40 年內達成 10 億資產目標</p>
   </div>
 </div>
 
 <!-- Top Status Bar -->
-<header id="top-bar" class="flex-shrink-0 z-40 px-4 py-2 hidden" style="background:#111827;border-bottom:1px solid #164e63;">
+<header id="top-bar" class="flex-shrink-0 z-40 px-4 py-2 top-bar-bg glass-panel hidden" style="border-radius:0;margin-bottom:0;">
   <div class="flex justify-between items-center text-sm">
     <div class="flex items-center gap-2">
-      <span class="text-cyan-400 font-bold" id="age-display">20歲</span>
-      <span class="text-gray-500">|</span>
-      <span class="text-yellow-400" id="year-display">第 1 年</span>
+      <span class="font-bold" style="color:var(--accent-cyan);" id="age-display">20歲</span>
+      <span style="color:var(--text-dim);">│</span>
+      <span style="color:var(--accent-yellow);" id="year-display">第 1 年</span>
     </div>
   </div>
   <div class="grid grid-cols-3 gap-2 mt-2 text-xs">
-    <div class="rounded-lg p-2 text-center" style="background:#1f2937;">
-      <div class="text-gray-400">💵 現金</div>
-      <div class="text-green-400 font-bold truncate" id="cash-display">$1,000,000</div>
+    <div class="stat-card">
+      <div style="color:var(--text-sub);">💵 現金</div>
+      <div class="font-bold truncate" style="color:var(--accent-yellow);" id="cash-display">$300 萬</div>
     </div>
-    <div class="rounded-lg p-2 text-center" style="background:#1f2937;">
-      <div class="text-gray-400">❤️ 健康</div>
+    <div class="stat-card">
+      <div style="color:var(--text-sub);">❤️ 健康</div>
       <div class="font-bold" id="health-display">
-        <div class="w-full rounded-full h-2 mt-1" style="background:#374151;">
-          <div class="h-2 rounded-full transition-all" id="health-bar" style="width:100%;background:#22c55e;"></div>
+        <div class="health-bar-track mt-1">
+          <div class="health-bar-fill" id="health-bar" style="width:100%;background:#00F2FE;color:#00F2FE;"></div>
         </div>
       </div>
     </div>
-    <div class="rounded-lg p-2 text-center" style="background:#1f2937;">
-      <div class="text-gray-400">⭐ 名聲</div>
-      <div class="text-purple-400 font-bold" id="rep-display">0</div>
+    <div class="stat-card">
+      <div style="color:var(--text-sub);">⭐ 名聲</div>
+      <div class="font-bold" style="color:var(--accent-purple);" id="rep-display">0</div>
     </div>
   </div>
   <div class="mt-2 text-center">
-    <span class="text-gray-400 text-xs">📊 總資產：</span>
-    <span class="text-cyan-300 font-black text-sm" id="networth-display">$1,000,000</span>
+    <span class="text-xs" style="color:var(--text-sub);">📊 總資產：</span>
+    <span class="font-black text-sm neon-text" id="networth-display">$300 萬</span>
   </div>
 </header>
 
 <!-- News Ticker -->
-<div id="news-ticker" class="flex-shrink-0 overflow-hidden h-8 flex items-center hidden" style="background:#111827;border-bottom:1px solid #1f2937;">
-  <span class="text-yellow-500 text-xs font-bold px-2 flex-shrink-0">📰 快訊</span>
+<div id="news-ticker" class="flex-shrink-0 overflow-hidden h-8 flex items-center ticker-bar hidden">
+  <span class="text-xs font-bold px-2 flex-shrink-0" style="color:var(--accent-pink);">📰 快訊</span>
   <div class="overflow-hidden flex-1">
-    <div id="ticker-text" class="whitespace-nowrap text-xs text-cyan-300 ticker-animate">
+    <div id="ticker-text" class="whitespace-nowrap text-xs ticker-animate" style="color:var(--accent-cyan);">
       歡迎來到 2026 年的台灣！你的逆襲人生即將開始...
     </div>
   </div>
 </div>
 
-<!-- Next Turn Button (prominent, fixed) -->
-<div id="next-turn-bar" class="flex-shrink-0 px-4 py-2 hidden" style="background:#0c1322;">
-  <button onclick="Game.nextTurn()" id="next-turn-btn" class="next-turn-btn w-full py-3 rounded-xl font-bold text-lg text-white transition">
+<!-- Next Turn Button -->
+<div id="next-turn-bar" class="flex-shrink-0 px-4 py-2 hidden" style="background:rgba(8,8,26,0.9);">
+  <button onclick="Game.nextTurn()" id="next-turn-btn" class="next-turn-btn w-full py-3.5 rounded-xl text-lg transition">
     ⏩ 進入下一年
   </button>
 </div>
 
 <!-- Main Content Area -->
-<main id="main-content" class="flex-1 overflow-y-auto pb-20 hidden" style="background:#030712;">
+<main id="main-content" class="flex-1 overflow-y-auto pb-20 hidden" style="background:var(--bg-deep-blue);">
   <!-- Market Tab -->
   <div id="tab-market" class="tab-content p-4 space-y-3">
     <div class="flex justify-between items-center mb-2">
-      <h2 class="text-lg font-bold text-cyan-400">🏪 商品市場</h2>
-      <span class="text-xs text-gray-500">倉庫: <span id="inventory-count">0</span>/<span id="inventory-max">10</span></span>
+      <h2 class="section-header text-base" style="color:var(--accent-cyan);">🏪 商品市場</h2>
+      <span class="text-xs" style="color:var(--text-dim);">倉庫: <span id="inventory-count" style="color:var(--accent-cyan);">0</span>/<span id="inventory-max">10</span></span>
     </div>
     <div id="market-list" class="space-y-3"></div>
   </div>
 
   <!-- Assets Tab -->
   <div id="tab-assets" class="tab-content p-4 space-y-3 hidden">
-    <h2 class="text-lg font-bold text-cyan-400 mb-2">🏠 房產投資</h2>
+    <h2 class="section-header text-base mb-2" style="color:var(--accent-purple);">🏠 房產投資</h2>
     <div id="assets-list" class="space-y-3"></div>
-    <h3 class="text-md font-bold text-yellow-400 mt-6 mb-2">🚗 名車收藏</h3>
+    <h3 class="section-header text-sm mt-6 mb-2" style="color:var(--accent-gold);">🚗 名車收藏</h3>
     <div id="vehicle-list" class="space-y-3"></div>
-    <h3 class="text-md font-bold text-orange-400 mt-6 mb-2">🏛️ 商會地位</h3>
+    <h3 class="section-header text-sm mt-6 mb-2" style="color:var(--accent-orange);">🏛️ 商會地位</h3>
     <div id="association-list" class="space-y-2"></div>
-    <h3 class="text-md font-bold text-purple-400 mt-6 mb-2">📦 我的倉庫</h3>
+    <h3 class="section-header text-sm mt-6 mb-2" style="color:var(--accent-cyan);">📦 我的倉庫</h3>
     <div id="warehouse-list" class="space-y-2"></div>
   </div>
 
   <!-- Social Tab -->
   <div id="tab-social" class="tab-content p-4 space-y-3 hidden">
-    <h2 class="text-lg font-bold text-cyan-400 mb-2">👥 社交圈</h2>
+    <h2 class="section-header text-base mb-2" style="color:#34d399;">👥 社交圈</h2>
     <div id="social-list" class="space-y-3"></div>
     <div id="partner-info" class="mt-4"></div>
   </div>
 
   <!-- Achievements Tab -->
   <div id="tab-achievements" class="tab-content p-4 space-y-3 hidden">
-    <h2 class="text-lg font-bold text-cyan-400 mb-2">🏆 成就系統</h2>
+    <h2 class="section-header text-base mb-2" style="color:var(--accent-gold);">🏆 成就系統</h2>
     <div id="achievements-list" class="space-y-2"></div>
   </div>
 </main>
 
 <!-- Event Modal -->
 <div id="event-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
-  <div class="absolute inset-0 bg-black/70" onclick="UI.closeEventModal()"></div>
-  <div class="relative rounded-2xl p-6 max-w-sm w-full neon-border animate-modal" style="background:#111827;border:1px solid #164e63;">
-    <div id="event-icon" class="text-4xl text-center mb-3">📰</div>
-    <h3 id="event-title" class="text-lg font-bold text-center text-cyan-300 mb-2"></h3>
-    <p id="event-desc" class="text-sm text-gray-400 text-center mb-4"></p>
-    <div id="event-effect" class="text-xs text-center text-yellow-400 mb-4"></div>
-    <button onclick="UI.closeEventModal()" class="w-full py-2 rounded-xl font-bold transition text-white" style="background:#0e7490;">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);" onclick="UI.closeEventModal()"></div>
+  <div class="relative modal-panel p-6 max-w-sm w-full animate-modal">
+    <div id="event-icon" class="text-5xl text-center mb-3">📰</div>
+    <h3 id="event-title" class="text-lg font-bold text-center mb-2" style="color:var(--accent-cyan);"></h3>
+    <p id="event-desc" class="text-sm text-center mb-4" style="color:var(--text-sub);"></p>
+    <div id="event-effect" class="text-xs text-center mb-4" style="color:var(--accent-yellow);"></div>
+    <button onclick="UI.closeEventModal()" class="w-full py-2.5 rounded-xl font-bold transition splash-btn-primary">
       了解！
     </button>
   </div>
@@ -142,20 +149,20 @@ tailwind.config = {
 
 <!-- End Game Screen -->
 <div id="end-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
-  <div class="absolute inset-0 bg-black/80"></div>
-  <div class="relative rounded-2xl p-6 max-w-sm w-full neon-border text-center" style="background:#111827;border:1px solid #164e63;">
-    <div id="end-icon" class="text-6xl mb-3"></div>
+  <div class="absolute inset-0" style="background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);"></div>
+  <div class="relative modal-panel p-6 max-w-sm w-full text-center animate-modal">
+    <div id="end-icon" class="text-7xl mb-3"></div>
     <h2 id="end-title" class="text-2xl font-black neon-text mb-2"></h2>
-    <p id="end-subtitle" class="text-gray-400 mb-4"></p>
-    <div id="end-stats" class="rounded-xl p-4 mb-4 text-left space-y-2 text-sm" style="background:#1f2937;"></div>
+    <p id="end-subtitle" class="mb-4" style="color:var(--text-sub);"></p>
+    <div id="end-stats" class="end-stats-panel p-4 mb-4 text-left space-y-2 text-sm"></div>
     <div class="space-y-2">
-      <button onclick="Leaderboard.promptName()" class="w-full py-3 rounded-xl font-bold transition text-white" style="background:#ca8a04;box-shadow:0 0 10px rgba(250,204,21,0.3);">
+      <button onclick="Leaderboard.promptName()" class="w-full py-3 rounded-xl font-bold transition splash-btn-gold text-lg">
         🏅 登上排行榜
       </button>
-      <button onclick="Game.newGame()" class="w-full py-3 rounded-xl font-bold transition neon-border text-white" style="background:#0891b2;">
+      <button onclick="Game.newGame()" class="w-full py-3 rounded-xl font-bold transition splash-btn-primary text-lg">
         🔄 再來一局
       </button>
-      <button onclick="Game.showSplash()" class="w-full py-2 rounded-xl text-sm transition text-gray-300" style="background:#1f2937;">
+      <button onclick="Game.showSplash()" class="w-full py-2 rounded-xl text-sm transition splash-btn-secondary">
         回主選單
       </button>
     </div>
@@ -163,35 +170,35 @@ tailwind.config = {
 </div>
 
 <!-- Bottom Nav -->
-<nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 max-w-lg mx-auto hidden" style="background:#111827;border-top:1px solid #164e63;">
+<nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 max-w-lg mx-auto bottom-nav-bg glass-panel hidden" style="border-radius:0;margin-bottom:0;">
   <div class="grid grid-cols-4 text-center text-xs">
-    <button onclick="UI.switchTab('market')" class="tab-btn py-3 text-cyan-400 border-t-2 border-cyan-400" data-tab="market">
+    <button onclick="UI.switchTab('market')" class="tab-btn tab-active py-3" data-tab="market">
       <div class="text-lg">🏪</div>市場
     </button>
-    <button onclick="UI.switchTab('assets')" class="tab-btn py-3 text-gray-500" data-tab="assets">
+    <button onclick="UI.switchTab('assets')" class="tab-btn py-3" style="color:var(--text-dim);" data-tab="assets">
       <div class="text-lg">🏠</div>資產
     </button>
-    <button onclick="UI.switchTab('social')" class="tab-btn py-3 text-gray-500" data-tab="social">
+    <button onclick="UI.switchTab('social')" class="tab-btn py-3" style="color:var(--text-dim);" data-tab="social">
       <div class="text-lg">👥</div>社交
     </button>
-    <button onclick="UI.switchTab('achievements')" class="tab-btn py-3 text-gray-500" data-tab="achievements">
+    <button onclick="UI.switchTab('achievements')" class="tab-btn py-3" style="color:var(--text-dim);" data-tab="achievements">
       <div class="text-lg">🏆</div>成就
     </button>
   </div>
 </nav>
 
 <!-- Tutorial Overlay -->
-<div id="tutorial-overlay" class="fixed inset-0 z-50 hidden" style="background:rgba(0,0,0,0.85);">
-  <div id="tutorial-highlight" class="absolute transition-all duration-300" style="box-shadow:0 0 0 9999px rgba(0,0,0,0.85);border-radius:12px;"></div>
-  <div id="tutorial-tooltip" class="absolute p-4 rounded-2xl max-w-xs animate-modal" style="background:#1e293b;border:1px solid #22d3ee;">
+<div id="tutorial-overlay" class="fixed inset-0 z-50 hidden" style="background:rgba(0,0,0,0.88);">
+  <div id="tutorial-highlight" class="absolute transition-all duration-300" style="box-shadow:0 0 0 9999px rgba(0,0,0,0.88);border-radius:12px;"></div>
+  <div id="tutorial-tooltip" class="absolute p-4 rounded-2xl max-w-xs animate-modal modal-panel">
     <div id="tutorial-step-icon" class="text-2xl mb-1"></div>
-    <h4 id="tutorial-step-title" class="font-bold text-cyan-300 mb-1"></h4>
-    <p id="tutorial-step-desc" class="text-sm text-gray-300 mb-3"></p>
+    <h4 id="tutorial-step-title" class="font-bold mb-1" style="color:var(--accent-cyan);"></h4>
+    <p id="tutorial-step-desc" class="text-sm mb-3" style="color:var(--text-sub);"></p>
     <div class="flex justify-between items-center">
-      <span id="tutorial-progress" class="text-xs text-gray-500"></span>
+      <span id="tutorial-progress" class="text-xs" style="color:var(--text-dim);"></span>
       <div class="flex gap-2">
-        <button onclick="Tutorial.skip()" class="px-3 py-1 text-xs text-gray-400 rounded-lg" style="background:#374151;">跳過</button>
-        <button onclick="Tutorial.next()" id="tutorial-next-btn" class="px-4 py-1 text-xs font-bold text-white rounded-lg" style="background:#0891b2;">下一步</button>
+        <button onclick="Tutorial.skip()" class="px-3 py-1 text-xs rounded-lg splash-btn-secondary">跳過</button>
+        <button onclick="Tutorial.next()" id="tutorial-next-btn" class="px-4 py-1 text-xs font-bold rounded-lg splash-btn-primary">下一步</button>
       </div>
     </div>
   </div>
@@ -199,17 +206,17 @@ tailwind.config = {
 
 <!-- Name Input Modal -->
 <div id="name-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
-  <div class="absolute inset-0 bg-black/70"></div>
-  <div class="relative rounded-2xl p-6 max-w-sm w-full neon-border animate-modal" style="background:#111827;border:1px solid #164e63;">
-    <h3 class="text-lg font-bold text-center text-cyan-300 mb-4">🏅 登上排行榜！</h3>
-    <p class="text-sm text-gray-400 text-center mb-4">輸入你的名字，讓所有人知道誰才是真正的霸總！</p>
+  <div class="absolute inset-0" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);"></div>
+  <div class="relative modal-panel p-6 max-w-sm w-full animate-modal">
+    <h3 class="text-lg font-bold text-center mb-4" style="color:var(--accent-gold);">🏅 登上排行榜！</h3>
+    <p class="text-sm text-center mb-4" style="color:var(--text-sub);">輸入你的名字，讓所有人知道誰才是真正的霸總！</p>
     <input id="player-name-input" type="text" maxlength="12" placeholder="輸入暱稱（最多 12 字）"
-      class="w-full rounded-xl px-4 py-3 text-center text-cyan-300 font-bold mb-4 focus:outline-none" style="background:#1f2937;border:1px solid #374151;">
+      class="w-full rounded-xl px-4 py-3 text-center font-bold mb-4 focus:outline-none" style="background:rgba(0,0,0,0.4);border:1px solid var(--border-neon);color:var(--accent-cyan);">
     <div class="space-y-2">
-      <button onclick="Leaderboard.submitScore()" class="w-full py-2 rounded-xl font-bold transition text-white" style="background:#0e7490;">
+      <button onclick="Leaderboard.submitScore()" class="w-full py-2.5 rounded-xl font-bold transition splash-btn-primary">
         提交成績
       </button>
-      <button onclick="Leaderboard.closeNameModal()" class="w-full py-2 rounded-xl text-sm text-gray-400 transition" style="background:#1f2937;">
+      <button onclick="Leaderboard.closeNameModal()" class="w-full py-2 rounded-xl text-sm transition splash-btn-secondary">
         跳過
       </button>
     </div>
@@ -218,23 +225,23 @@ tailwind.config = {
 
 <!-- Leaderboard Modal -->
 <div id="leaderboard-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
-  <div class="absolute inset-0 bg-black/70" onclick="Leaderboard.closeModal()"></div>
-  <div class="relative rounded-2xl p-5 max-w-sm w-full max-h-screen overflow-hidden" style="background:#111827;border:1px solid #92400e;box-shadow:0 0 20px rgba(250,204,21,0.2);">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);" onclick="Leaderboard.closeModal()"></div>
+  <div class="relative modal-panel-gold p-5 max-w-sm w-full max-h-screen overflow-hidden animate-modal">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-bold text-yellow-400">🏅 霸總排行榜</h3>
-      <button onclick="Leaderboard.closeModal()" class="text-gray-500 hover:text-gray-300 text-xl">&times;</button>
+      <h3 class="text-lg font-bold" style="color:var(--accent-gold);">🏅 霸總排行榜</h3>
+      <button onclick="Leaderboard.closeModal()" class="text-xl" style="color:var(--text-dim);">&times;</button>
     </div>
     <div class="flex gap-2 mb-4">
-      <button onclick="Leaderboard.switchTab('local')" id="lb-tab-local" class="flex-1 py-2 rounded-lg text-xs font-bold text-yellow-400 transition" style="background:#78350f;border:1px solid #92400e;">
+      <button onclick="Leaderboard.switchTab('local')" id="lb-tab-local" class="flex-1 py-2 rounded-lg text-xs font-bold transition splash-btn-gold">
         📱 本機紀錄
       </button>
-      <button onclick="Leaderboard.switchTab('global')" id="lb-tab-global" class="flex-1 py-2 rounded-lg text-xs font-bold text-gray-500 transition" style="background:#1f2937;border:1px solid #374151;">
+      <button onclick="Leaderboard.switchTab('global')" id="lb-tab-global" class="flex-1 py-2 rounded-lg text-xs font-bold transition splash-btn-secondary">
         🌐 全球排名
       </button>
     </div>
     <div id="leaderboard-list" class="space-y-2 overflow-y-auto" style="max-height:55vh;"></div>
     <div class="mt-4 text-center">
-      <button onclick="Leaderboard.shareScore()" id="lb-share-btn" class="px-6 py-2 rounded-xl text-sm font-bold transition text-white hidden" style="background:#7e22ce;">
+      <button onclick="Leaderboard.shareScore()" id="lb-share-btn" class="px-6 py-2 rounded-xl text-sm font-bold transition hidden" style="background:rgba(191,90,242,0.2);border:1px solid rgba(191,90,242,0.4);color:var(--accent-purple);">
         📤 分享成績
       </button>
     </div>
@@ -242,7 +249,7 @@ tailwind.config = {
 </div>
 
 <!-- Toast Notification -->
-<div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 opacity-0 pointer-events-none"></div>
+<div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 opacity-0 pointer-events-none toast-base"></div>
 
 <script src="data.js"></script>
 <script src="game.js"></script>
