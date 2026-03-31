@@ -23,6 +23,12 @@ function calcNetWorth(state) {
       if (v) worth += v.price;
     }
   }
+  // Investment value (original cost, already deducted from cash when bought)
+  if (state.investments) {
+    for (const inv of state.investments) {
+      worth += inv.invested;
+    }
+  }
   return worth;
 }
 
@@ -51,6 +57,7 @@ const DEFAULT_STATE = {
   properties: [],      // [propertyId, ...]
   vehicles: [],        // [vehicleId, ...]
   associations: [],    // [associationId, ...]
+  investments: [],     // [{ id, invested, totalReturn }]
   friends: [],         // [npcId, ...]
   achievements: [],    // [achievementId, ...]
   warehouseCapacity: 10,
@@ -87,6 +94,7 @@ const Game = {
       if (saved) {
         this.state = JSON.parse(saved);
         if (!this.state.turnActions) this.state.turnActions = {};
+        if (!this.state.investments) this.state.investments = [];
         this._startGame();
       }
     } catch (e) {
@@ -217,6 +225,30 @@ const Game = {
     }
     if (assocBonus > 0) {
       s.cash += assocBonus;
+    }
+
+    // 7d. Process investment returns
+    if (s.investments && s.investments.length > 0) {
+      for (const inv of s.investments) {
+        const def = INVESTMENTS.find(i => i.id === inv.id);
+        if (!def) continue;
+        const roll = Math.random();
+        if (roll < def.returnChance) {
+          // Success: get return
+          const mult = def.returnMin + Math.random() * (def.returnMax - def.returnMin);
+          const returnAmt = Math.round(def.cost * mult * 0.2); // 20% of multiplied cost per year
+          s.cash += returnAmt;
+          inv.totalReturn += returnAmt;
+          UI.showToast(def.successMsg + ` +$${formatMoney(returnAmt)}`, 'cyan');
+        } else if (roll > 1 - def.failChance) {
+          // Fail: lose money
+          const lossAmt = Math.round(def.cost * def.failRatio * 0.2);
+          s.cash -= lossAmt;
+          inv.totalReturn -= lossAmt;
+          UI.showToast(def.failMsg + ` -$${formatMoney(lossAmt)}`, 'red');
+        }
+        // Otherwise: neutral year, no return
+      }
     }
 
     // 8. Age-related health decay
@@ -576,6 +608,25 @@ const Game = {
     UI.updateAll();
   },
 
+  buyInvestment(invId) {
+    const s = this.state;
+    if (!s.investments) s.investments = [];
+    const inv = INVESTMENTS.find(i => i.id === invId);
+    if (!inv) return;
+    if (s.investments.find(i => i.id === invId)) { UI.showToast('❌ 已經投資過了！', 'red'); return; }
+    if (s.cash < inv.cost) { UI.showToast('❌ 現金不足！', 'red'); return; }
+    if (s.age < inv.unlockAge) { UI.showToast('❌ 尚未解鎖！', 'red'); return; }
+
+    s.cash -= inv.cost;
+    s.investments.push({ id: invId, invested: inv.cost, totalReturn: 0 });
+    s.reputation += inv.repBonus;
+
+    UI.showToast(`🎯 投資了 ${inv.name}！`, 'cyan');
+    Game._checkAchievements();
+    UI.updateAll();
+    Game.saveGame();
+  },
+
   expandWarehouse() {
     const s = this.state;
     const cost = s.warehouseCapacity * 50000;
@@ -882,6 +933,39 @@ const UI = {
     }
 
     container.innerHTML = html;
+
+    // Render investments
+    const invContainer = document.getElementById('investment-list');
+    if (!invContainer) return;
+    if (!s.investments) s.investments = [];
+    let invHtml = '';
+    for (const inv of INVESTMENTS) {
+      const owned = s.investments.find(i => i.id === inv.id);
+      const locked = s.age < inv.unlockAge;
+      const returnInfo = owned ? owned.totalReturn : 0;
+
+      invHtml += `
+        <div class="social-card ${locked && !owned ? 'opacity-40' : ''}">
+          <div class="flex items-start gap-3">
+            <span class="text-3xl icon-glow">${inv.icon}</span>
+            <div class="flex-1">
+              <div class="font-bold text-sm">
+                ${inv.name}
+                ${owned ? '<span class="text-green-400 text-xs ml-1">✓ 已投資</span>' : ''}
+              </div>
+              <div class="text-xs" style="color:var(--accent-cyan);">${inv.description}</div>
+              <div class="text-xs mt-1" style="color:var(--text-sub);">
+                成功率 ${Math.round(inv.returnChance * 100)}% ｜ 回報 ${inv.returnMin}~${inv.returnMax}x ｜ ⭐+${inv.repBonus}
+              </div>
+              ${owned ? `<div class="text-xs mt-1 font-bold" style="color:${returnInfo >= 0 ? 'var(--accent-yellow)' : 'var(--accent-pink)'};">累計回報: ${returnInfo >= 0 ? '+' : ''}$${formatMoney(returnInfo)}</div>` :
+                locked ? `<div class="text-xs mt-1" style="color:var(--text-dim);">🔒 ${inv.unlockAge}歲解鎖</div>` :
+                `<button class="btn-buy mt-1" onclick="Game.buyInvestment(${inv.id})">投資 $${formatMoney(inv.cost)}</button>`}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    invContainer.innerHTML = invHtml;
   },
 
   _renderAchievements() {

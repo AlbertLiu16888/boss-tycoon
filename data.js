@@ -19,6 +19,8 @@ const PROPERTIES = [
   { id: 3, name: "信義區商辦", icon: "🏙️", price: 50000000, rent: 200000, repBonus: 30, unlockAge: 32, description: "信義計畫區 A 辦，霸總標配" },
   { id: 4, name: "花蓮民宿", icon: "🏡", price: 6000000, rent: 35000, repBonus: 8, unlockAge: 26, description: "面海景觀，觀光財" },
   { id: 5, name: "私人農場", icon: "🌾", price: 3000000, rent: 10000, repBonus: 3, unlockAge: 22, description: "有機農業，健康 +5 / 年" },
+  { id: 6, name: "仁愛帝寶", icon: "🏰", price: 650000000, rent: 500000, repBonus: 80, unlockAge: 35, description: "台北頂級豪宅，身份地位的象徵" },
+  { id: 7, name: "陶朱隱園", icon: "🌿", price: 1110000000, rent: 0, repBonus: 100, unlockAge: 40, description: "旋轉綠建築，無租金但名聲頂天" },
 ];
 
 // ===== NPC 社交角色 =====
@@ -162,6 +164,35 @@ const ASSOCIATIONS = [
   { id: 3, name: "獅子會地區總監", icon: "🦁", repReq: 120, yearlyBonus: 3000000, sellBonus: 0, description: "國際服務社團領袖，每年加成 300 萬" },
   { id: 4, name: "扶輪社地區總監", icon: "⚙️", repReq: 200, yearlyBonus: 5000000, sellBonus: 0, description: "國際扶輪領導者，每年加成 500 萬" },
   { id: 5, name: "商業傳奇人物", icon: "👑", repReq: 500, yearlyBonus: 10000000, sellBonus: 0.5, description: "傳奇霸總，每年 1000 萬＋賣出多 50%" },
+];
+
+// ===== 社交投資項目 =====
+const INVESTMENTS = [
+  { id: 1, name: "韓團 TWICE 演唱會", icon: "🎤", cost: 50000000, repBonus: 30, unlockAge: 25,
+    returnChance: 0.55, returnMin: 1.5, returnMax: 4.0, failChance: 0.15, failRatio: 0.3,
+    description: "投資台灣場巡演，票房爆滿就是印鈔機",
+    successMsg: "🎤 TWICE 演唱會一票難求，票房收入大爆發！",
+    failMsg: "😢 演唱會因故延期，損失慘重..." },
+  { id: 2, name: "世界棒球經典賽國家隊", icon: "⚾", cost: 80000000, repBonus: 50, unlockAge: 28,
+    returnChance: 0.45, returnMin: 2.0, returnMax: 5.0, failChance: 0.2, failRatio: 0.4,
+    description: "贊助中華隊，打進四強就名利雙收",
+    successMsg: "⚾ 中華隊晉級四強！贊助商曝光率爆表，回報驚人！",
+    failMsg: "😞 中華隊止步預賽，贊助效益不如預期..." },
+  { id: 3, name: "Netflix 直播：攀登台北 101", icon: "🗼", cost: 120000000, repBonus: 40, unlockAge: 30,
+    returnChance: 0.50, returnMin: 1.8, returnMax: 6.0, failChance: 0.10, failRatio: 0.25,
+    description: "全球直播極限挑戰，爆紅全世界",
+    successMsg: "🗼 Netflix 節目全球爆紅，訂閱分潤源源不絕！",
+    failMsg: "📉 節目收視平平，投資回收緩慢..." },
+  { id: 4, name: "台灣電競戰隊世界賽", icon: "🎮", cost: 30000000, repBonus: 20, unlockAge: 22,
+    returnChance: 0.50, returnMin: 1.5, returnMax: 3.5, failChance: 0.20, failRatio: 0.35,
+    description: "贊助電競戰隊出征世界賽，年輕人的流量密碼",
+    successMsg: "🎮 戰隊奪冠！品牌曝光全球，贊助回報翻倍！",
+    failMsg: "💔 戰隊小組賽出局，贊助費打水漂..." },
+  { id: 5, name: "媽祖遶境 NFT 聯名", icon: "🏮", cost: 20000000, repBonus: 15, unlockAge: 24,
+    returnChance: 0.60, returnMin: 1.3, returnMax: 3.0, failChance: 0.10, failRatio: 0.2,
+    description: "傳統文化 x 數位潮流，信仰經濟新商機",
+    successMsg: "🏮 媽祖 NFT 秒殺完售，文化 IP 授權金持續進帳！",
+    failMsg: "😅 NFT 市場低迷，銷售不如預期..." },
 ];
 
 // ===== 生活費基準 =====
